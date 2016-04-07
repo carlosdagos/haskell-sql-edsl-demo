@@ -48,8 +48,7 @@ We're concerned with results rather than performance.
 
 #### Not about ORMs
 
-Generating queries is not about mapping data types to database
-rows.
+Generating queries is not about mapping data types to database rows.
 
 #### PostgreSQL
 
@@ -106,14 +105,15 @@ Of course we also want to add a TODO
 
 ```bash
 $ todos add 'Display presentation at Haskellerz!' \
-            --categories 'haskellerz, fun'        \
+            --due-by   '19-05-2016'               \
+            --hashtags '#haskellerz, #fun'        \
             --priority 10
 Added TODO with id 6
 ```
 
-So far this is a basic CRUD. But what about more complex queries? No software
-is complete without its flags. Plus, from `find` we saw that our app is aware
-of the concept of a "category", as well as due dates.
+So far this is a basic CR~~U~~D. But what about more complex queries? No software
+is complete without its flags. Plus, from `$ todo find 1` we saw that our app is aware
+of the concept of a "hashtag", as well as due dates.
 
 ---
 
@@ -124,15 +124,15 @@ of the concept of a "category", as well as due dates.
 List TODOs that are due by a certain date.
 
 ```bash
-$ todos list --due-by tomorrow --with-categories
+$ todos list --due-by tomorrow --with-hashtags
 1. Buy food     (due by: tomorrow) (priority: 5) #independence #responsible
 2. Call parents (due by: tomorrow) (priority: 7) #good-son
 ```
 
-List TODOs that are due on a certain date, and belong to a certain category.
+List TODOs that are due on a certain date, and belong to a certain hashtag.
 
 ```bash
-$ todos list --due-by tomorrow --order-by-priority --categories "responsible"
+$ todos list --due-by tomorrow --order-by-priority --hashtag "responsible"
 2. Call parents (due by: tomorrow) (priority: 7) #good-son
 1. Buy food     (due by: tomorrow) (priority: 5) #independence #responsible
 ```
@@ -140,7 +140,7 @@ $ todos list --due-by tomorrow --order-by-priority --categories "responsible"
 List TODOs that are already late...
 
 ```bash
-$ todos list --late --with-categories
+$ todos list --late --with-hashtags
 5. Call boss (due by: 18 May 2016) (priority: 20) #good-employee
 ```
 
@@ -152,7 +152,7 @@ $ todos list --late --with-categories
 
 .pull-left[
 <br>
-<img src="images/todo_db.png" alt="todo database design" width="390" />
+<img src="images/todo_db.png" alt="todo database design" width="340" />
 ]
 
 .pull-right[
@@ -160,18 +160,14 @@ $ todos list --late --with-categories
 create table todos(
   id serial primary key,
   title varchar(50) not null,
-  due_date datetime not null,
+  due_date date not null,
   prio int
 )
 
-create table categories(
-  title varvar(50) not null
-)
-
-create table categories_todos(
-  category_id int not null,
+create table hashtags(
   todo_id int not null,
-  primary key (category_id, todo_id)
+  hashtag varchar(50) not null,
+  primary key (todo_id, hashtag)
 )
 ```
 ]
@@ -180,46 +176,73 @@ create table categories_todos(
 
 ## Sample application and design
 
-#### Queries we'll need
+#### (Some of the) queries we'll need
 
-List our TODOs
+To see all our TODOs
 ```sql
 select * from todos
 ```
-Find a specific TODO
+To find a specific TODO
 ```sql
 select * from todos where id = ?
 ```
-Complete a TODO
+To complete a TODO
 ```sql
 delete from todos where id = ?
 ```
-List TODOs that are due by a specific date
+To add a TODO
 ```sql
-select * from todos where due_date = ?
+insert into todos (title, due_date, prority) values (?, ?, ?)
 ```
 ---
 
 ## Sample application and design
 
-#### Queries we'll need
+#### Database design
 
+List TODOs that are due by a specific date
+```sql
+select * from todos where due_date = ?
+```
+List TODOs ordered by priority
+```sql
+select * from todos order by prio
+```
 List late TODOs
 ```sql
 select * from todos where due_date < current_date
 ```
-List TODOs due on a specific date and belonging to a certain category
+List TODOs due on a specific date and belonging to a certain hashtag
 ```sql
-select * from categories c
-left join categories_todos ct on c.title = ct.category_title
-left join todos t             on t.id = ct.todo_id
-where c.title    = ?
+select * from hashtags h
+join todos t on h.todo_id = t.id
+where h.hashtag  = ?
 and   t.due_date = ?
 ```
 
 ---
 
 ## Current state of things
+
+#### Leon Smith's [`postgresql-simple`](http://hackage.haskell.org/package/postgresql-simple)
+
+```haskell
+type TodoId  = Int
+newtype Prio = Maybe Int deriving (Show)
+
+data Todo = Todo { getId       :: !TodoId
+                 , getTitle    :: !String
+                 , getDueDate  :: !String
+                 , getPriority :: !Prio
+                 } deriving (Show)
+
+data Hashtag = Hashtag { getTodoId  :: !TodoId
+                       , getHashtag :: String
+                       } deriving (Show, Eq)
+
+instance Eq Todo where
+    x == y = getId x == getId y
+```
 
 ---
 
