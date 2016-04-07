@@ -10,7 +10,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Carlos D'Agostino
 maintainer:          carlos.dagostino@gmail.com
--- copyright:
+copyright:           MIT
 -- category:
 build-type:          Simple
 -- extra-source-files:
