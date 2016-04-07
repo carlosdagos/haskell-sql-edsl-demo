@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Simple.Todo                 (Todo, TodoId, Prio, allTodos)
-import Simple.Hashtag              (Hashtag)
+import Simple.Todo
+import Simple.Hashtag
 import Database.PostgreSQL.Simple
 
 main :: IO ()

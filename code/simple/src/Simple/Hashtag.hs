@@ -3,8 +3,8 @@ module Simple.Hashtag
       Hashtag
     ) where
 
-import Simple.Todo (TodoId)
+import Simple.Todo
 
-data Hashtag = Hashtag { getTodoId  :: !TodoId
-                       , getHashtag :: String
+data Hashtag = Hashtag { getTodoId  :: !(Maybe Int)
+                       , getHashtag :: !String
                        } deriving (Show, Eq)

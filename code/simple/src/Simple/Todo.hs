@@ -2,22 +2,21 @@
 
 module Simple.Todo
     ( -- * Exports
-      TodoId
-    , allTodos
-    , Prio
+      allTodos
     , Todo
     ) where
 
-import Database.PostgreSQL.Simple         (Query)
-import Database.PostgreSQL.Simple.FromRow (FromRow, fromRow, field)
+import GHC.Int                              (Int64)
+import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.FromRow   (FromRow, fromRow, field)
+import Database.PostgreSQL.Simple.FromField (FromField, fromField)
+import Database.PostgreSQL.Simple.ToRow     (ToRow, toRow)
+import Database.PostgreSQL.Simple.ToField   (ToField, toField)
 
-type TodoId = Int
-type Prio   = Maybe Int
-
-data Todo = Todo { getId       :: !TodoId
-                 , getTitle    :: !String
-                 , getDueDate  :: !String
-                 , getPriority :: !Prio
+data Todo = Todo { getId       :: !(Maybe Int) -- Can be null
+                 , getTitle    :: !String      -- Title of the todo
+                 , getDueDate  :: !String      -- Date of the todo
+                 , getPrio     :: !(Maybe Int) -- Priority of the todo
                  } deriving (Show)
 
 instance FromRow Todo where
@@ -26,23 +25,51 @@ instance FromRow Todo where
                    <*> field -- due date
                    <*> field -- prio
 
-allTodosQuery :: Query
-allTodosQuery = "select id, title, due_date, prio from todos"
+instance ToRow Todo where
+    toRow t = [ toField (getTitle t)
+              , toField (getDueDate t)
+              , toField (getPrio t)
+              ]
 
-findTodoQuery :: Query
-findTodoQuery = "select id, title, due_date, prio from todos where id = ?"
+isNew :: Todo -> Bool
+isNew t = Nothing == getId t
 
-deleteTodoQuery :: Query
-deleteTodoQuery = "delete from todos where id = ?"
+allTodos :: Connection -> IO [Todo]
+allTodos conn = query_ conn q
+                where
+                  q = "select id, title, due_date, prio from todos"
 
-addTodoQuery :: Query
-addTodoQuery = "insert into todos (title, due_date, priority) values (?, ?, ?)"
+findTodo :: Connection -> Int -> IO [Todo]
+findTodo conn tid =
+               query conn q (Only tid)
+               where
+                 q = "select id, title, due_date, prio from todos where id = ?"
 
-allTodosByDateQuery :: Query
-allTodosByDateQuery = "select id, title, due_date, prio from todos where due_date = ?"
+deleteTodo :: Connection -> Int -> IO Int64
+deleteTodo conn tid = execute conn q (Only tid)
+                      where
+                        q = "delete from todos where id = ?"
 
-allTodosByPrioQuery :: Query
-allTodosByPrioQuery = "select id, title, due_date, prio from todos order by prio"
+addTodo :: Connection -> Todo -> IO [Only Int]
+addTodo conn t = query conn q t
+                 where
+                   q = "insert into todos (title, due_date, priority) " `mappend`
+                       "values (?, ?, ?) "                              `mappend`
+                       "returning id"
 
-allLateTodosQuery :: Query
-allLateTodosQuery = "select id, title, due_date, prio from todos where due_date < current_date"
+allTodosByDate :: Connection -> String -> IO [Todo]
+allTodosByDate conn d = query conn q (Only d)
+                        where
+                          q = "select id, title, due_date, prio from todos where due_date = ?"
+
+allTodosByPrio :: Connection -> IO [Todo]
+allTodosByPrio conn = query_ conn q
+                      where
+                        q = "select id, title, due_date, prio from todos order by prio"
+
+allLateTodos :: Connection -> IO [Todo]
+allLateTodos conn = query_ conn q
+                    where
+                      q = "select id, title, due_date, prio from todos where due_date < current_date"
+
+
