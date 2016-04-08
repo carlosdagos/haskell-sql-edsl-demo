@@ -4,22 +4,18 @@
 name:                haskellerz-sqlgen-opaleye
 version:             0.1.0.0
 synopsis:            Showcase of Opaleye for SQL generation in Haskell for Haskellerz in Zurich
--- description:
 homepage:            http://cdagostino.io
 license:             MIT
 license-file:        LICENSE
 author:              Carlos D'Agostino
 maintainer:          carlos.dagostino@gmail.com
 copyright:           MIT
--- category:
 build-type:          Simple
--- extra-source-files:
 cabal-version:       >=1.10
 
 executable haskellerz-sqlgen-opaleye
+  ghc-options:         -Wall -Werror
   main-is:             Main.hs
-  -- other-modules:
-  -- other-extensions:
   build-depends:       base   == 4.8.*
                      , opaleye == 0.4.*
   hs-source-dirs:      src
