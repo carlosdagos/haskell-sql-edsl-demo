@@ -19,7 +19,7 @@ flags = [ Option ['d'] ["due-by"]              (ReqArg DueBy "DATE")
                 "Get todos with the associated hashtags"
         , Option ['h'] ["hashtags"]            (ReqArg SearchHashtag "HASHTAGS")
                 "Get todos for a certain hashtag"
-        , Option ['o'] ["order-by-priority"] (NoArg OrderByPriority)
+        , Option ['o'] ["order-by-priority"]   (NoArg OrderByPriority)
                 "Get todos ordered by priority"
         , Option ['p'] ["priority"]            (ReqArg SetPriority "PRIORITY")
                 "When adding a todo, you can set its priority"
@@ -29,13 +29,19 @@ flags = [ Option ['d'] ["due-by"]              (ReqArg DueBy "DATE")
                 "Show version"
         ]
 
+header :: String
+header = "todos <command> [options]\n\n\
+         \Available commands: find, add, complete, list\n"
+
 --------------------------------------------------------------------------------
 -- | Parse the command and the corresponding flags (if any)
 parse :: [String] -> Either String (Command, [Flag])
 -- Simple parsing of commands
 parse []                = Left "Wrong number of arguments."
-parse ("--help":_)      = Left "This is help"
-parse ("--version":_)   = Left "Version: 0.1.0.0"
+parse ("-h":_)          = Left (usageInfo header flags)
+parse ("--help":_)      = Left (usageInfo header flags)
+parse ("-v":_)          = Left "0.1.0.0"
+parse ("--version":_)   = Left "0.1.0.0"
 parse args = case args of
                ("find":x:argv)  -> makeCommand (Find (read x :: Int)) argv
                ("add":x:argv)   -> makeCommand (Add (read x :: String)) argv
@@ -53,7 +59,6 @@ makeCommand c argv = case getOpt Permute flags argv of
 getResults :: Either String (Command, [Flag]) -> IO ()
 -- An error happened
 getResults (Left s) = hPutStrLn stderr s
-                   >> hPutStrLn stderr "Run with --help for help."
                    >> exitWith (ExitFailure 1)
 -- We have an appropriate command and its results
 getResults (Right (c, flags')) = runAndPrintCommand c flags'
