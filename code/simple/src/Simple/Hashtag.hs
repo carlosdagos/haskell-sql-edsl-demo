@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Simple.Hashtag
     ( -- * Exports
       allHashtags
+    , allHashtagsForTodo
     , allHashtagsWithTodos
     , getTodoId
     , getHashtag
@@ -15,7 +17,9 @@ module Simple.Hashtag
     ) where
 
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromRow   (fromRow, field)
+import Database.PostgreSQL.Simple.FromRow (fromRow, field)
+import Database.PostgreSQL.Simple.Time    (Date)
+import Database.PostgreSQL.Simple.SqlQQ   (sql)
 
 data Hashtag = Hashtag { getTodoId  :: !(Maybe Int)
                        , getHashtag :: !String
@@ -24,7 +28,7 @@ data Hashtag = Hashtag { getTodoId  :: !(Maybe Int)
 data HashtagTodo = HashtagTodo { getHashtagTodoId :: !Int
                                , getHashtagHash   :: !String
                                , getTitle         :: !String
-                               , getDueDate       :: !String
+                               , getDueDate       :: !Date
                                , getPrio          :: !(Maybe Int)
                                }
 
@@ -45,8 +49,14 @@ allHashtags conn = query_ conn "select * from hashtags"
 allHashtagsWithTodos :: Connection -> IO [HashtagTodo]
 allHashtagsWithTodos conn = query_ conn q
                             where
-                              q = "select todo_id, hashtag, title, due_date, prio \
-                                 \ from hashtags h \
-                                 \ join todos t \
-                                 \ on t.id = h.todo_id"
+                              q = [sql|
+                                select todo_id, hashtag, title, due_date, prio
+                                from hashtags h
+                                join todos t
+                                on t.id = h.todo_id |]
 
+allHashtagsForTodo :: Connection -> Int -> IO [Hashtag]
+allHashtagsForTodo conn tid = query conn q (Only tid)
+                              where
+                               q = [sql| select todo_id, hashtag
+                                         from hashtags where todo_id = ? |]

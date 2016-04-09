@@ -29,7 +29,7 @@ class: center, middle
 ]
 
 .right-column[
-I'm Carlos!
+I'm Carlos.
 
 I've been paid to write Java, Scala and PHP.
 
@@ -83,10 +83,10 @@ We want to find specific ones
 
 ```bash
 $ todos find 1
-Todo:       Buy food
-Due by:     Tomorrow
-Priority:   5
-Categories: #independence #responsible
+Todo:     Buy food
+Due by:   Tomorrow
+Priority: 5
+Hashtags: #independence #responsible
 ```
 ---
 
@@ -112,7 +112,7 @@ Added TODO with id 6
 ```
 
 So far this is a basic CR~~U~~D. But what about more complex queries? No software
-is complete without its flags. Plus, from `$ todo find 1` we saw that our app is aware
+is complete without its flags. Plus, from `$ todos find 1` we saw that our app is aware
 of the concept of a "hashtag", as well as due dates.
 
 ---

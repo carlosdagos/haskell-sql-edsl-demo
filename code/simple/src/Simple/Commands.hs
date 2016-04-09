@@ -9,6 +9,13 @@ module Simple.Commands
     , Flag(..)
     ) where
 
+import Data.Time
+import Data.List                                 (intercalate)
+import qualified Simple.Todo as T
+import qualified Simple.Hashtag as H
+import           Database.PostgreSQL.Simple      (Connection)
+import           Database.PostgreSQL.Simple.Time (Date)
+
 --------------------------------------------------------------------------------
 -- | Commands available for the application
 data Command
@@ -33,20 +40,67 @@ data Flag
 
 --------------------------------------------------------------------------------
 -- | Main command runner
-runAndPrintCommand :: Command -> [Flag] -> IO ()
-runAndPrintCommand (Find x) flags     = runFindCommand x flags
-runAndPrintCommand (Add  x) flags     = runAddCommand x flags
-runAndPrintCommand (Complete x) flags = runCompleteCommand x flags
-runAndPrintCommand List flags         = runListCommand flags
+runAndPrintCommand :: Connection -> Command -> [Flag] -> IO ()
+runAndPrintCommand conn (Find x) flags     = runFindCommand conn x flags
+runAndPrintCommand conn (Add  x) flags     = runAddCommand conn x flags
+runAndPrintCommand conn (Complete x) flags = runCompleteCommand conn x flags
+runAndPrintCommand conn List flags         = runListCommand conn flags
 
-runFindCommand :: Int -> [Flag] -> IO ()
-runFindCommand = undefined
+runFindCommand :: Connection -> Int -> [Flag] -> IO ()
+runFindCommand c tid _ = do
+    todo     <- T.findTodo c tid
+    hashtags <- H.allHashtagsForTodo c tid
+    putStrLn $ unlines [ "Todo: "     ++ show tid
+                       , "Title: "    ++ T.getTitle todo
+                       , "Due by: "   ++ show (T.getDueDate todo)
+                       , "Priority: " ++ priority (T.getPrio todo)
+                       , "Hashtags: " ++ showHashtags hashtags
+                       ]
+    where
+        priority Nothing  = "-"
+        priority (Just d) = show d
 
-runAddCommand :: String -> [Flag] -> IO ()
-runAddCommand = undefined
+runAddCommand :: Connection -> String -> [Flag] -> IO ()
+runAddCommand _ desc flags = do
+    now <- getCurrentTime
 
-runCompleteCommand :: Int -> [Flag] -> IO ()
+    let priority = prioFromFlags flags
+    let todo = if priority /= Nothing then
+                  T.Todo { T.getId      = Nothing
+                         , T.getTitle   = desc
+                         , T.getDueDate = dueDateFromFlags now flags
+                         , T.getPrio    = priority
+                         }
+               else
+                  T.Todo { T.getId      = Nothing
+                         , T.getTitle   = desc
+                         , T.getDueDate = dueDateFromFlags now flags
+                         , T.getPrio    = Nothing
+                         }
+    putStrLn (show todo)
+
+
+runCompleteCommand :: Connection -> Int -> [Flag] -> IO ()
 runCompleteCommand = undefined
 
-runListCommand :: [Flag] -> IO ()
+runListCommand :: Connection -> [Flag] -> IO ()
 runListCommand = undefined
+
+showHashtags :: [H.Hashtag] -> String
+showHashtags hs = intercalate ", " $ map H.getHashtag hs
+
+--------------------------------------------------------------------------------
+-- | Helper function to get the due date from the list of flags
+dueDateFromFlags :: UTCTime -> [Flag] -> Date
+dueDateFromFlags now [] =
+    read (intercalate "-" $ map show [year, month, day]) :: Date
+    where
+        (year, month, day) = toGregorian $ utctDay now
+dueDateFromFlags now ((DueBy s):_) = read s :: Date
+dueDateFromFlags now (_:xs)        = dueDateFromFlags now xs
+
+-- | Helper function to get the priority setting from the list of flags
+prioFromFlags :: [Flag] -> Maybe Int
+prioFromFlags []                  = Nothing
+prioFromFlags ((SetPriority p):_) = Just (read p :: Int)
+prioFromFlags (_:xs)              = prioFromFlags xs

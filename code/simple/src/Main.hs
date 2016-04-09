@@ -7,6 +7,7 @@ import System.IO
 import System.Environment
 import System.Console.GetOpt
 import Simple.Commands
+import Database.PostgreSQL.Simple
 
 --------------------------------------------------------------------------------
 -- | Flags with their corresponding description
@@ -47,7 +48,7 @@ parse args = case args of
                ("add":x:argv)   -> makeCommand (Add (read x :: String)) argv
                ("complete":x:_) -> makeCommand (Complete (read x :: Int)) []
                ("list":argv)    -> makeCommand List argv
-               _                -> Left "Unrecognized command."
+               _                -> Left "Unrecognized command or wrong number of arguments."
 
 makeCommand :: Command -> [String] -> Either String (Command, [Flag])
 makeCommand c argv = case getOpt Permute flags argv of
@@ -56,15 +57,16 @@ makeCommand c argv = case getOpt Permute flags argv of
 
 --------------------------------------------------------------------------------
 -- | Gets the results of a command and its corresponding flags
-getResults :: Either String (Command, [Flag]) -> IO ()
+getResults :: Connection -> Either String (Command, [Flag]) -> IO ()
 -- An error happened
-getResults (Left s) = hPutStrLn stderr s
-                   >> exitWith (ExitFailure 1)
+getResults _ (Left s) = hPutStrLn stderr s
+                     >> exitWith (ExitFailure 1)
 -- We have an appropriate command and its results
-getResults (Right (c, flags')) = runAndPrintCommand c flags'
-                              >> exitWith ExitSuccess
+getResults conn (Right (c, flags')) = runAndPrintCommand conn c flags'
+                                   >> exitWith ExitSuccess
 
 main :: IO ()
 main = do
-    parsed <- getArgs >>= return . parse
-    getResults parsed
+    parsed <- return . parse =<< getArgs
+    conn   <- connect defaultConnectInfo
+    getResults conn parsed
