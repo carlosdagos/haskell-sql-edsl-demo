@@ -75,7 +75,7 @@ allTodosByDate conn d = query conn q (Only d)
                         where
                           q = [sql| select id, title, due_date, prio
                                     from todos
-                                    where due_date = ?" |]
+                                    where due_date = ? |]
 
 allTodosByPrio :: Connection -> IO [Todo]
 allTodosByPrio conn = query_ conn q
