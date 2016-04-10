@@ -11,9 +11,10 @@ module Simple.Commands
 
 import System.IO
 import System.Exit
+import Data.Time.Calendar                        (fromGregorian)
 import Data.Maybe                                (fromJust)
 import Data.List                                 (intercalate)
-import qualified Data.ByteString.Char8 as B      (pack)
+import qualified Data.ByteString.Char8 as B      (unpack, pack, split)
 import qualified Simple.Todo as T
 import qualified Simple.Hashtag as H
 import           Database.PostgreSQL.Simple      (Connection)
@@ -71,16 +72,17 @@ runFindCommand c tid _ = do
 runAddCommand :: Connection -> String -> [Flag] -> IO ()
 runAddCommand _ desc flags = do
     let priority = prioFromFlags flags
+    let dueDate  = either (\e -> error e) id (dueDateFromFlags flags)
     let todo = if priority /= Nothing then
                   T.Todo { T.getId      = Nothing
                          , T.getTitle   = desc
-                         , T.getDueDate = dueDateFromFlags flags
+                         , T.getDueDate = dueDate
                          , T.getPrio    = priority
                          }
                else
                   T.Todo { T.getId      = Nothing
                          , T.getTitle   = desc
-                         , T.getDueDate = dueDateFromFlags flags
+                         , T.getDueDate = dueDate
                          , T.getPrio    = Nothing
                          }
     putStrLn (show todo)
@@ -96,7 +98,7 @@ runCompleteCommand c tid = do
         hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
     else if (affected > 0) then
         (putStrLn $ intercalate " "
-            [ "👍  Finished todo"
+            [ "👍 Completed"
             , "'" ++ T.getTitle (fromJust maybeTodo)
             , showHashtags hashtags ++ "'"
             ])
@@ -135,14 +137,17 @@ showHashtags hs = intercalate ", " $ map H.getHashtag hs
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
-dueDateFromFlags :: [Flag] -> Date
+dueDateFromFlags :: [Flag] -> Either String Date
 dueDateFromFlags []            = error "Must specify due date!"
-dueDateFromFlags ((DueBy s):_) = either
-                                 (\e  -> error e)
-                                 id
-                                 (parseDate (B.pack ("\"" ++ s ++ "\"")))
+dueDateFromFlags ((DueBy s):_) = parseDate (B.pack $ show (fromGregorian year month day))
+                                 where
+                                   ymd   = B.split '-' (B.pack s)
+                                   year  = read (B.unpack (ymd !! 0)) :: Integer
+                                   month = read (B.unpack (ymd !! 1)) :: Int
+                                   day   = read (B.unpack (ymd !! 2)) :: Int
 dueDateFromFlags (_:xs)        = dueDateFromFlags xs
 
+--------------------------------------------------------------------------------
 -- | Helper function to get the priority setting from the list of flags
 prioFromFlags :: [Flag] -> Maybe Int
 prioFromFlags []                  = Nothing

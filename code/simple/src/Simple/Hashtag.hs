@@ -16,13 +16,16 @@ module Simple.Hashtag
     , Hashtag
     ) where
 
+import Data.Maybe                         (fromJust)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromRow (fromRow, field)
+import Database.PostgreSQL.Simple.ToRow   (toRow)
+import Database.PostgreSQL.Simple.ToField (toField)
 import Database.PostgreSQL.Simple.Time    (Date)
 import Database.PostgreSQL.Simple.SqlQQ   (sql)
 
-data Hashtag = Hashtag { getTodoId  :: !(Maybe Int)
-                       , getHashtag :: !String
+data Hashtag = Hashtag { getTodoId  :: !(Maybe Int) -- Can be null
+                       , getHashtag :: !String      -- Hashtag string val
                        } deriving (Show, Eq)
 
 data HashtagTodo = HashtagTodo { getHashtagTodoId :: !Int
@@ -35,6 +38,11 @@ data HashtagTodo = HashtagTodo { getHashtagTodoId :: !Int
 instance FromRow Hashtag where
     fromRow = Hashtag <$> field -- the todo id
                       <*> field -- the hashtag string
+
+instance ToRow Hashtag where
+    toRow h = [ toField . fromJust . getTodoId $ h
+              , toField . getHashtag $ h
+              ]
 
 instance FromRow HashtagTodo where
     fromRow = HashtagTodo <$> field -- the todo id

@@ -72,11 +72,11 @@ We want to see all our TODOs
 
 ```bash
 $ todos list
-1. Buy food             (due by: tomorrow   )  (priority: 5 )
-2. Call parents         (due by: tomorrow   )  (priority: 7 )
-3. Wash clothes         (due by: 23 May 2016)  (priority: - )
-4. Finish presentation  (due by: today      )  (priority: 10)
-5. Call boss            (due by: 18 May 2016)  (priority: 20)
+1. Buy food            (due by: 2016-05-20) (priority: 5 )
+2. Call parents        (due by: 2016-05-20) (priority: 7 )
+3. Wash clothes        (due by: 2016-05-23) (priority: - )
+4. Finish presentation (due by: 2016-05-19) (priority: 10)
+5. Call boss           (due by: 2016-05-18) (priority: 20)
 ```
 
 We want to find specific ones
@@ -84,7 +84,7 @@ We want to find specific ones
 ```bash
 $ todos find 1
 Todo:     Buy food
-Due by:   Tomorrow
+Due by:   2016-05-20
 Priority: 5
 Hashtags: #independence #responsible
 ```
@@ -105,7 +105,7 @@ Of course we also want to add a TODO
 
 ```bash
 $ todos add 'Display presentation at Haskellerz!' \
-            --due-by   '19-05-2016'               \
+            --due-by   '2016-05-19'               \
             --hashtags '#haskellerz, #fun'        \
             --priority 10
 Added TODO with id 6
@@ -124,17 +124,17 @@ of the concept of a "hashtag", as well as due dates.
 List TODOs that are due by a certain date.
 
 ```bash
-$ todos list --due-by tomorrow --with-hashtags
-1. Buy food     (due by: tomorrow) (priority: 5) #independence #responsible
-2. Call parents (due by: tomorrow) (priority: 7) #good-son
+$ todos list --due-by '2016-05-20' --with-hashtags
+1. Buy food     (due by: 2016-05-20) (priority: 5) #independence #responsible
+2. Call parents (due by: 2016-05-20) (priority: 7) #good-son
 ```
 
 List TODOs that are due on a certain date, and belong to a certain hashtag.
 
 ```bash
-$ todos list --due-by tomorrow --order-by-priority --hashtag "responsible"
-2. Call parents (due by: tomorrow) (priority: 7) #good-son
-1. Buy food     (due by: tomorrow) (priority: 5) #independence #responsible
+$ todos list --due-by '2015-05-20' --order-by-priority --hashtag "#responsible"
+2. Call parents (due by: 2015-05-20) (priority: 7) #good-son
+1. Buy food     (due by: 2015-05-20) (priority: 5) #independence #responsible
 ```
 
 List TODOs that are already late...
@@ -165,9 +165,9 @@ create table todos(
 )
 
 create table hashtags(
-  todo_id int not null,
   hashtag varchar(50) not null,
-  primary key (todo_id, hashtag)
+  todo_id int not null,
+  primary key (hashtag, todo_id)
 )
 ```
 ]
@@ -226,22 +226,164 @@ and   t.due_date = ?
 
 #### Leon Smith's [`postgresql-simple`](http://hackage.haskell.org/package/postgresql-simple)
 
-```haskell
-type TodoId  = Int
-newtype Prio = Maybe Int deriving (Show)
+I can design my types normally
 
-data Todo = Todo { getId       :: !TodoId
-                 , getTitle    :: !String
-                 , getDueDate  :: !String
-                 , getPriority :: !Prio
+```haskell
+-- file simple/src/Simple/Todo.hs
+data Todo = Todo { getId       :: !(Maybe Int) -- Can be null
+                 , getTitle    :: !String      -- Title of the todo
+                 , getDueDate  :: !Date        -- Date of the todo
+                 , getPrio     :: !(Maybe Int) -- Priority of the todo
                  } deriving (Show)
 
-data Hashtag = Hashtag { getTodoId  :: !TodoId
-                       , getHashtag :: String
+-- file simple/src/Simple/Hashtag.hs
+data Hashtag = Hashtag { getTodoId  :: !(Maybe Int) -- Can be null
+                       , getHashtag :: !String      -- Hashtag string val
                        } deriving (Show, Eq)
+```
 
-instance Eq Todo where
-    x == y = getId x == getId y
+---
+
+## Current state of things
+
+Define how each row maps to the declared data
+
+```haskell
+-- file simple/src/Simple/Todo.hs
+instance FromRow Todo where
+    fromRow = Todo <$> field -- id
+                   <*> field -- title
+                   <*> field -- due date
+                   <*> field -- prio
+
+instance ToRow Todo where
+    toRow t = [ toField (getTitle t)
+              , toField (getDueDate t)
+              , toField (getPrio t)
+              ]
+
+-- file simple/src/Simple/Hashtag.hs
+instance FromRow Hashtag where
+    fromRow = Hashtag <$> field -- the todo id
+                      <*> field -- the hashtag string
+
+instance ToRow Hashtag where
+    toRow h = [ toField . fromJust . getTodoId $ h
+              , toField . getHashtag $ h
+              ]
+```
+
+---
+
+## Current state of things
+
+#### Sample methods
+
+```haskell
+-- file src/Simple/Todo.hs
+allTodos :: Connection -> IO [Todo]
+allTodos conn = query_ conn q
+                where
+                  q = [sql| select id, title, due_date, prio
+                            from todos |]
+
+-- Same query, with 1 restriction
+findTodo :: Connection -> Int -> IO (Maybe Todo)
+findTodo conn tid = do
+               result <- query conn q (Only tid)
+               return $ if length result == 1 then
+                    Just (head result)
+               else
+                    Nothing
+               where
+                 q = [sql| select id, title, due_date, prio
+                           from todos
+                           where id = ? |]
+```
+
+That was simple enough!
+
+---
+
+## Current state of things
+
+However...
+
+```haskell
+-- Same query again, this time sorted in a specific way
+allTodosByPrio :: Connection -> IO [Todo]
+allTodosByPrio conn = query_ conn q
+                      where
+                        q = [sql| select id, title, due_date, prio
+                                  from todos
+                                  order by prio desc
+                                  nulls last |]
+
+-- Same query as before, this time with another restriction
+allLateTodos :: Connection -> IO [Todo]
+allLateTodos conn = query_ conn q
+                    where
+                      q = [sql| select id, title, due_date, prio
+                                from todos
+                                where due_date < current_date |]
+
+```
+
+What's the problem?
+
+---
+
+## Current state of things
+
+Although `postgresql-simple` is amazing, let's look at a few issues we wish we could address:
+
+#### Problems
+
+1. I'm repeating myself constantly.
+2. My queries are almost always the same, varying in by restriction, or order
+specification.
+3. "QuasiQuoted" strings are hard to concatenate... but do we really want that?
+**NO!** QuasiQuotes are hard to concatenate on purpose!
+4. My `FromRow` and `ToRow` instances will be constantly in need of updates
+as the requirements change.
+5. I could write an query in a quasiquote and not know that anything is wrong
+until I run it.
+6. I have no guarantee that I'm typing a type-safe query (i.e. The `getDate`
+from `Todo` could be a `String`, and my program would compile, but it would
+not crash until I run it, since the field in the table is defined as a `date`.
+
+---
+
+## Current state of things
+
+#### Bad `Todo` definition
+
+```haskell
+-- file simple/src/Simple/BadTodo.hs
+data BadTodo = BadTodo !(Maybe Int) -- Can be null
+                       !String      -- Title of the todo
+                       !String      -- Date of the todo, this time as a String
+                       !(Maybe Int) -- Priority of the todo
+                       deriving (Show)
+```
+
+Case in point:
+
+```haskell
+let getBadTodos = do {
+    c <- connect defaultConnectionInfo
+    badTodos <- allBadTodos -- Todos with a date type as String
+}
+
+getBadTodos
+
+*** Exception: Incompatible {
+    errSQLType = "date",
+    errSQLTableOid = Just (Oid 16401),
+    errSQLField = "due_date",
+    errHaskellType = "Text",
+    errMessage = "types incompatible"
+}
 ```
 
 ---
