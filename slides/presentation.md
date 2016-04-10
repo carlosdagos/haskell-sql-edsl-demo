@@ -255,3 +255,6 @@ instance Eq Todo where
 ---
 
 ## Closing Notes & Considerations
+
+- [Oliver Charles on `postgresql-simple` at ZuriHac 2015](https://youtu.be/GobPiGL9jJ4?t=17m30s)
+
