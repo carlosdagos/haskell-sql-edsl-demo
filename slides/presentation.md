@@ -339,16 +339,18 @@ Although `postgresql-simple` is amazing, let's look at a few issues we wish we c
 
 #### Problems
 
-1. I'm repeating myself constantly.
-2. My queries are almost always the same, varying in by restriction, or order
+- I'm repeating myself constantly.
+- My queries are almost always the same, varying in by restriction, or order
 specification.
-3. "QuasiQuoted" strings are hard to concatenate... but do we really want that?
-**NO!** QuasiQuotes are hard to concatenate on purpose!
-4. My `FromRow` and `ToRow` instances will be constantly in need of updates
+- "QuasiQuoted" strings are hard to concatenate... but do we really want that?
+**NO!** `sql`-QuasiQuotes are hard to concatenate on purpose!
+- My `FromRow` and `ToRow` instances will be constantly in need of updates
 as the requirements change.
-5. I could write an query in a quasiquote and not know that anything is wrong
+- `field` functions provide a convenient row parser, however the result is not
+very semantically-meaningful.
+- I could write an query in a quasiquote and not know that anything is wrong
 until I run it.
-6. I have no guarantee that I'm typing a type-safe query (i.e. The `getDate`
+- I have no guarantee that I'm typing a type-safe query (i.e. The `getDate`
 from `Todo` could be a `String`, and my program would compile, but it would
 not crash until I run it, since the field in the table is defined as a `date`.
 
