@@ -82,7 +82,8 @@ allTodosByPrio conn = query_ conn q
                       where
                         q = [sql| select id, title, due_date, prio
                                   from todos
-                                  order by prio |]
+                                  order by prio desc
+                                  nulls last |]
 
 allLateTodos :: Connection -> IO [Todo]
 allLateTodos conn = query_ conn q

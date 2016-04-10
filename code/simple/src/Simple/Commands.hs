@@ -84,7 +84,10 @@ runCompleteCommand = undefined
 
 runListCommand :: Connection -> [Flag] -> IO ()
 runListCommand c flags = do
-    todos <- T.allTodos c
+    todos <- if OrderByPriority `elem` flags then
+                T.allTodosByPrio c
+             else
+                T.allTodos c
     mapM_ (printTodo flags c) todos
 
 printTodo :: [Flag] -> Connection -> T.Todo -> IO ()
