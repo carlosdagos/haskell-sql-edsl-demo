@@ -40,6 +40,9 @@ instance ToRow Todo where
               , toField (getPrio t)
               ]
 
+instance Eq Todo where
+    t1 == t2 = (getId t1) == (getId t2)
+
 isNew :: Todo -> Bool
 isNew t = Nothing == getId t
 
@@ -49,9 +52,13 @@ allTodos conn = query_ conn q
                   q = [sql| select id, title, due_date, prio
                             from todos |]
 
-findTodo :: Connection -> Int -> IO Todo
-findTodo conn tid =
-               return . head =<< query conn q (Only tid)
+findTodo :: Connection -> Int -> IO (Maybe Todo)
+findTodo conn tid = do
+               result <- query conn q (Only tid)
+               return $ if length result == 1 then
+                    Just (head result)
+               else
+                    Nothing
                where
                  q = [sql| select id, title, due_date, prio
                            from todos

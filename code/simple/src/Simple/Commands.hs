@@ -9,6 +9,8 @@ module Simple.Commands
     , Flag(..)
     ) where
 
+import System.IO
+import System.Exit
 import Data.Maybe                                (fromJust)
 import Data.List                                 (intercalate)
 import qualified Data.ByteString.Char8 as B      (pack)
@@ -42,21 +44,26 @@ data Flag
 --------------------------------------------------------------------------------
 -- | Main command runner
 runAndPrintCommand :: Connection -> Command -> [Flag] -> IO ()
-runAndPrintCommand conn (Find x) flags     = runFindCommand conn x flags
-runAndPrintCommand conn (Add  x) flags     = runAddCommand conn x flags
-runAndPrintCommand conn (Complete x) flags = runCompleteCommand conn x flags
-runAndPrintCommand conn List flags         = runListCommand conn flags
+runAndPrintCommand conn (Find x) flags  = runFindCommand conn x flags
+runAndPrintCommand conn (Add  x) flags  = runAddCommand conn x flags
+runAndPrintCommand conn (Complete x) _  = runCompleteCommand conn x
+runAndPrintCommand conn List flags      = runListCommand conn flags
 
 runFindCommand :: Connection -> Int -> [Flag] -> IO ()
 runFindCommand c tid _ = do
-    todo     <- T.findTodo c tid
-    hashtags <- H.allHashtagsForTodo c tid
-    putStrLn $ unlines [ "Todo: "     ++ show tid
-                       , "Title: "    ++ T.getTitle todo
-                       , "Due by: "   ++ show (T.getDueDate todo)
-                       , "Priority: " ++ priority (T.getPrio todo)
-                       , "Hashtags: " ++ showHashtags hashtags
-                       ]
+    maybeTodo <- T.findTodo c tid
+    hashtags  <- H.allHashtagsForTodo c tid
+
+    if maybeTodo /= Nothing then
+        let todo = fromJust maybeTodo in
+        putStrLn $ unlines [ "Todo: "     ++ show tid
+                           , "Title: "    ++ T.getTitle todo
+                           , "Due by: "   ++ show (T.getDueDate todo)
+                           , "Priority: " ++ priority (T.getPrio todo)
+                           , "Hashtags: " ++ showHashtags hashtags
+                           ]
+    else
+        hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
     where
         priority Nothing  = "-"
         priority (Just d) = show d
@@ -79,8 +86,24 @@ runAddCommand _ desc flags = do
     putStrLn (show todo)
 
 
-runCompleteCommand :: Connection -> Int -> [Flag] -> IO ()
-runCompleteCommand = undefined
+runCompleteCommand :: Connection -> Int -> IO ()
+runCompleteCommand c tid = do
+    maybeTodo <- T.findTodo c tid
+    hashtags  <- H.allHashtagsForTodo c tid
+    affected  <- T.deleteTodo c tid
+
+    if maybeTodo == Nothing then
+        hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
+    else if (affected > 0) then
+        (putStrLn $ intercalate " "
+            [ "👍  Finished todo"
+            , "'" ++ T.getTitle (fromJust maybeTodo)
+            , showHashtags hashtags ++ "'"
+            ])
+        >> exitWith ExitSuccess
+    else
+        hPutStrLn stderr "Error: Something went wrong!"
+     >> exitWith (ExitFailure 1)
 
 runListCommand :: Connection -> [Flag] -> IO ()
 runListCommand c flags = do
