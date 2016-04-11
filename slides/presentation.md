@@ -408,7 +408,8 @@ getBadTodos
 
 #### Note on HaskellDB
 
-[As expressed by HRR creators](http://khibino.github.io/haskell-relational-record/pdf/hrr-haskell-sympo2015-rejected.pdf), HaskellDB has a number of drawbacks.
+[As expressed by HRR creators](http://khibino.github.io/haskell-relational-record/pdf/hrr-haskell-sympo2015-rejected.pdf),
+HaskellDB has a number of drawbacks.
 
 Mainly:
 
