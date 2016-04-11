@@ -358,7 +358,7 @@ not crash until I run it, since the field in the table is defined as a `date`.
 
 ## Current state of things
 
-#### Bad `Todo` definition
+Case in point:
 
 ```haskell
 -- file simple/src/Simple/BadTodo.hs
@@ -367,11 +367,7 @@ data BadTodo = BadTodo !(Maybe Int) -- Can be null
                        !String      -- Date of the todo, this time as a String
                        !(Maybe Int) -- Priority of the todo
                        deriving (Show)
-```
 
-Case in point:
-
-```haskell
 let getBadTodos = do {
     c <- connect defaultConnectionInfo
     badTodos <- allBadTodos -- Todos with a date type as String
