@@ -413,7 +413,7 @@ HaskellDB has a number of drawbacks.
 
 Mainly:
 
-- Limited epxression ability of projections.
+- Limited expression ability of projections.
 - Does not provide support for (left, right, or full) outer joins
 - Column name conflicts.
 - Partial support for placeholders.
