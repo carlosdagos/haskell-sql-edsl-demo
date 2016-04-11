@@ -425,5 +425,6 @@ Mainly:
 #### Reading material
 
 - [Oliver Charles on `postgresql-simple` at ZuriHac 2015](https://youtu.be/GobPiGL9jJ4?t=17m30s)
+- [HRR on Haskell Hackathon, December 2012](http://htmlpreview.github.io/?https://github.com/khibino/haskell-relational-record/blob/master/doc/slide/haskell-hackathon-201412/HRR.html)
 - [Experience Report on HRR](http://khibino.github.io/haskell-relational-record/pdf/hrr-haskell-sympo2015-rejected.pdf)
 
