@@ -335,7 +335,8 @@ What's the problem?
 
 ## Current state of things
 
-Although `postgresql-simple` is amazing, let's look at a few issues we wish we could address:
+Although `postgresql-simple` is amazing, let's look at a few issues we
+wish we could address:
 
 #### Problems
 
