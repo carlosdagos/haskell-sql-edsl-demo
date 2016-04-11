@@ -14,8 +14,8 @@ class: center, middle
 
 1. Introduction
 2. What this talk is about
-3. Current state of things
-4. Sample application and design
+3. Sample application and design
+4. Current state of things
 5. Haskell Relational Record (HRR)
 6. Opaleye
 7. Closing notes. Considerations.
@@ -176,7 +176,15 @@ create table hashtags(
 
 ## Sample application and design
 
-#### (Some of the) queries we'll need
+#### Quick refresher on JOINS
+
+.center[<img src="images/sql_joins.jpg" alt="joins" width="500" />]
+
+---
+
+## Sample application and design
+
+#### (Some of the queries we'll need
 
 To see all our TODOs
 ```sql
@@ -343,8 +351,9 @@ wish we could address:
 - I'm repeating myself constantly.
 - My queries are almost always the same, varying in by restriction, or order
 specification.
-- "QuasiQuoted" strings are hard to concatenate... but do we really want that?
-**NO!** `sql`-QuasiQuotes are hard to concatenate on purpose!
+- "QuasiQuoted" strings are hard to concatenate... but do we really want
+ease of concatenation? **NO!** `sql`-QuasiQuotes are hard to concatenate on
+purpose!
 - My `FromRow` and `ToRow` instances will be constantly in need of updates
 as the requirements change.
 - `field` functions provide a convenient row parser, however the result is not
@@ -397,5 +406,24 @@ getBadTodos
 
 ## Closing Notes & Considerations
 
+#### Note on HaskellDB
+
+[As expressed by HRR creators](http://khibino.github.io/haskell-relational-record/pdf/hrr-haskell-sympo2015-rejected.pdf), HaskellDB has a number of drawbacks.
+
+Mainly:
+
+- Limited epxression ability of projections.
+- Does not provide support for (left, right, or full) outer joins
+- Column name conflicts.
+- Partial support for placeholders.
+- Unclear aggregation semantics.
+
+---
+
+## Closing Notes & Considerations
+
+#### Reading material
+
 - [Oliver Charles on `postgresql-simple` at ZuriHac 2015](https://youtu.be/GobPiGL9jJ4?t=17m30s)
+- [Experience Report on HRR](http://khibino.github.io/haskell-relational-record/pdf/hrr-haskell-sympo2015-rejected.pdf)
 
