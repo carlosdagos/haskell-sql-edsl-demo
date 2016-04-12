@@ -1,6 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
+-- QuasiQuotes refresher => QuasiQuotes are not like TemplateHaskell's quotes,
+-- rather they are more like TH splices. See mailing list
+-- https://mail.haskell.org/pipermail/haskell-cafe/2016-April/123619.html
+
 module Simple.Todo
     ( -- * Exports
       Todo (..)

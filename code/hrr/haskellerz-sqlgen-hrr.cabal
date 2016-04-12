@@ -14,8 +14,16 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 executable haskellerz-sqlgen-hrr
-  ghc-options:         -Wall -Werror
+  ghc-options:         -Wall
   main-is:             Main.hs
-  build-depends:       base >=4.8 && <4.9
+  build-depends:       base                  == 4.8.*
+                     , relational-record     == 0.1.3.*
+                     , relational-query      >= 0.3
+                     , relational-query-HDBC == 0.6.*
+                     , persistable-record    == 0.4.0.*
+                     , HDBC-postgresql       == 2.3.2.*
+                     , template-haskell      == 2.10.*
+                     , time                  == 1.5.*
+                     , HDBC                  == 2.4.0.1
   hs-source-dirs:      src
   default-language:    Haskell2010
