@@ -45,10 +45,10 @@ data Flag
 --------------------------------------------------------------------------------
 -- | Main command runner
 runAndPrintCommand :: Connection -> Command -> [Flag] -> IO ()
-runAndPrintCommand conn (Find x) flags  = runFindCommand conn x flags
-runAndPrintCommand conn (Add  x) flags  = runAddCommand conn x flags
-runAndPrintCommand conn (Complete x) _  = runCompleteCommand conn x
-runAndPrintCommand conn List flags      = runListCommand conn flags
+runAndPrintCommand conn (Find x) flags = runFindCommand conn x flags
+runAndPrintCommand conn (Add x) flags  = runAddCommand conn x flags
+runAndPrintCommand conn (Complete x) _ = runCompleteCommand conn x
+runAndPrintCommand conn List flags     = runListCommand conn flags
 
 runFindCommand :: Connection -> Int -> [Flag] -> IO ()
 runFindCommand c tid _ = do

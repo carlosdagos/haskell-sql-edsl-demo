@@ -6,8 +6,8 @@ import System.Exit
 import System.IO
 import System.Environment
 import System.Console.GetOpt
-import HRR.Commands
 import Database.HDBC.PostgreSQL
+import HRR.Commands
 
 --------------------------------------------------------------------------------
 -- | Flags with their corresponding description
@@ -24,6 +24,8 @@ flags = [ Option ['d'] ["due-by"]              (ReqArg DueBy "DATE")
                 "Get todos ordered by priority"
         , Option ['p'] ["priority"]            (ReqArg SetPriority "PRIORITY")
                 "When adding a todo, you can set its priority"
+        , Option ['d'] ["debug"]               (NoArg Debug)
+                "Debug sql executed"
         , Option ['h'] ["help"]                (NoArg Help)
                 "Show help menu"
         , Option ['v'] ["version"]             (NoArg Version)
@@ -48,7 +50,8 @@ parse args = case args of
                ("add":x:argv)   -> makeCommand (Add (read x :: String)) argv
                ("complete":x:_) -> makeCommand (Complete (read x :: Int)) []
                ("list":argv)    -> makeCommand List argv
-               _                -> Left "Unrecognized command or wrong number of arguments."
+               _                -> Left "Unrecognized command or wrong \
+                                        \number of arguments."
 
 makeCommand :: Command -> [String] -> Either String (Command, [Flag])
 makeCommand c argv = case getOpt Permute flags argv of

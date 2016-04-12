@@ -48,7 +48,8 @@ parse args = case args of
                ("add":x:argv)   -> makeCommand (Add (read x :: String)) argv
                ("complete":x:_) -> makeCommand (Complete (read x :: Int)) []
                ("list":argv)    -> makeCommand List argv
-               _                -> Left "Unrecognized command or wrong number of arguments."
+               _                -> Left "Unrecognized command or wrong \
+                                        \number of arguments."
 
 makeCommand :: Command -> [String] -> Either String (Command, [Flag])
 makeCommand c argv = case getOpt Permute flags argv of

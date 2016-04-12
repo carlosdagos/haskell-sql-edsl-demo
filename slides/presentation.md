@@ -230,6 +230,15 @@ and   t.due_date = ?
 
 ---
 
+## Sample application and design
+
+In short, we'll plenty of queries to match all the possible combinations of flags that I can accept.
+
+- I can compose flags
+- Can I compose my queries?
+
+---
+
 ## Current state of things
 
 #### Leon Smith's [`postgresql-simple`](http://hackage.haskell.org/package/postgresql-simple)
@@ -397,6 +406,28 @@ getBadTodos
 ---
 
 ## Haskell Relational Record (HRR)
+
+#### My new definition for `Todo`
+
+```haskell
+-- file hrr/src/HRR/Todo.hs
+{-# LANGUAGE TemplateHaskell #-}
+```
+```haskell
+import HRR.DataSource
+
+$(defineTable "public" "todo" [''Show])
+```
+
+#### What happened?
+
+- HRR will use TH to generate our data declaration
+- A database connection will be needed on compilation time
+- Our data declartion will have the fields of the table in CamelCase
+- I did have to define the `defineTable` method, see file
+`hrr/src/HRR/DataSource.hs`, with PostgreSQL-specific functions.
+- Some "queries" will be generated for me already, namely: `todo`, `insertTodo`,
+`selectTodo`, `updateTodo`, ...
 
 ---
 
