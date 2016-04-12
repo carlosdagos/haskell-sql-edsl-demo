@@ -372,6 +372,7 @@ until I run it.
 - I have no guarantee that I'm typing a type-safe query (i.e. The `getDate`
 from `Todo` could be a `String`, and my program would compile, but it would
 not crash until I run it, since the field in the table is defined as a `date`.
+This is also a problem when refactoring my database.
 
 ---
 
@@ -459,4 +460,4 @@ Mainly:
 - [Oliver Charles on `postgresql-simple` at ZuriHac 2015](https://youtu.be/GobPiGL9jJ4?t=17m30s)
 - [HRR on Haskell Hackathon, December 2012](http://htmlpreview.github.io/?https://github.com/khibino/haskell-relational-record/blob/master/doc/slide/haskell-hackathon-201412/HRR.html)
 - [Experience Report on HRR](http://khibino.github.io/haskell-relational-record/pdf/hrr-haskell-sympo2015-rejected.pdf)
-
+- [Reddit thread with opinions on Opaleye and HRR - With creators' comments](https://www.reddit.com/r/haskell/comments/3fuq4s/opaleye_or_relationalrecord/)
