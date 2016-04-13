@@ -12,9 +12,10 @@ module HRR.Commands
     ) where
 
 import           Database.Relational.Query
-import           Database.HDBC                   (IConnection, SqlValue)
+import           Database.HDBC                   (IConnection, SqlValue, commit)
 import           Database.HDBC.Record            (runQuery, runInsert
-                                                 , runInsertQuery)
+                                                 , runInsertQuery
+                                                 , runInsert)
 import           Database.Record                 (ToSql, FromSql)
 import           Data.Time.Calendar              (Day, fromGregorian)
 import qualified Data.ByteString.Char8 as B      (unpack, pack, split)
@@ -51,7 +52,7 @@ runAndPrintCommand conn cmd flags
   = case cmd of
       List       -> runListCommand conn flags
       Find _     -> putStrLn "find!"
-      Add title  -> runAddCommand conn title flags
+      Add title  -> runAlternativeAddCommand conn title flags
       Complete _ -> putStrLn "complete!"
 
 
@@ -70,20 +71,24 @@ runAddCommand conn title flags = do
                                                |*| value (Just 11)
     let insertQ = derivedInsertQuery T.piTodo' insertR
     i <- runInsertQuery conn insertQ ()
+    commit conn
     putStrLn (show i)
 
---runAlternativeAddCommand :: (IConnection conn)
---                         => conn -> String -> [Flag] -> IO ()
---runAlternativeAddCommand conn title flags = do
---    let dueDate    = dueDateFromFlags
---    let insertTodo = derivedInsertValue $ do
---        T.title'   <-# value title
---        T.dueDate' <-# value dueDate
---        T.prio'    <-# value (Just 11)
---        return unitPlaceHolder
-
---    putStrLn (show insertTodo)
-
+--------------------------------------------------------------------------------
+-- | Alternative insert command avoiding the use of hrr "applicatives", would
+-- | remove the need to declare the Pi datas for partial record information
+runAlternativeAddCommand :: (IConnection conn)
+                         => conn -> String -> [Flag] -> IO ()
+runAlternativeAddCommand conn title flags = do
+    let dueDate    = dueDateFromFlags flags
+    let insertTodo = derivedInsertValue $ do
+                        T.title'   <-# (value title)
+                        T.dueDate' <-# (value dueDate)
+                        T.prio'    <-# (value (Just 11))
+                        return unitPlaceHolder
+    i <- runInsert conn insertTodo ()
+    commit conn
+    putStrLn (show i)
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
