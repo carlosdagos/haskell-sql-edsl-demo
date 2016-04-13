@@ -17,7 +17,7 @@ import Data.List                                 (intercalate)
 import qualified Data.ByteString.Char8 as B      (unpack, pack, split)
 import qualified Simple.Todo as T
 import qualified Simple.Hashtag as H
-import           Database.PostgreSQL.Simple      (Connection)
+import           Database.PostgreSQL.Simple      (Connection, Only(..))
 import           Database.PostgreSQL.Simple.Time (Date, parseDate)
 
 --------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ runFindCommand c tid _ = do
         priority (Just d) = show d
 
 runAddCommand :: Connection -> String -> [Flag] -> IO ()
-runAddCommand _ desc flags = do
+runAddCommand c desc flags = do
     let priority = prioFromFlags flags
     let dueDate  = either (\e -> error e) id (dueDateFromFlags flags)
     let todo = if priority /= Nothing then
@@ -85,8 +85,9 @@ runAddCommand _ desc flags = do
                          , T.getDueDate = dueDate
                          , T.getPrio    = Nothing
                          }
-    putStrLn (show todo)
 
+    Only tid <- T.addTodo c todo
+    putStrLn (intercalate " " ["Added todo", show tid])
 
 runCompleteCommand :: Connection -> Int -> IO ()
 runCompleteCommand c tid = do

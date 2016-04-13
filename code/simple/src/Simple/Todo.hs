@@ -77,7 +77,7 @@ deleteTodo conn tid = execute conn q (Only tid)
 addTodo :: Connection -> Todo -> IO (Only Int)
 addTodo conn t = return . head =<< query conn q t
                  where
-                   q = [sql| insert into todos (title, due_date, priority)
+                   q = [sql| insert into todos (title, due_date, prio)
                              values (?, ?, ?)
                              returning id |]
 
