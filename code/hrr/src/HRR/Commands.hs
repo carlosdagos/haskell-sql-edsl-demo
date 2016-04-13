@@ -54,7 +54,7 @@ runAndPrintCommand conn cmd flags
       List       -> runListCommand conn flags
       Find x     -> runFindCommand conn x flags
       Add title  -> runAlternativeAddCommand conn title flags
-      Complete _ -> putStrLn "complete!"
+      Complete x -> runCompleteCommand conn x
 
 
 runListCommand :: (IConnection conn) => conn -> [Flag] -> IO ()
@@ -103,6 +103,14 @@ runFindCommand conn x flags = do
         runDebug conn x findQ
     else
         run conn x findQ
+
+runCompleteCommand :: (IConnection conn) => conn -> Int32 -> IO ()
+runCompleteCommand conn x = do
+    let deleteQ = typedDelete T.tableOfTodo . restriction $
+                    \projection -> do
+                        wheres $ projection ! T.todoId' .=. value x
+
+    putStrLn (show deleteQ)
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
