@@ -2,6 +2,7 @@
 
 module Main where
 
+import Data.Int                     (Int32)
 import System.Exit
 import System.IO
 import System.Environment
@@ -46,9 +47,9 @@ parse ("--help":_)      = Left (usageInfo header flags)
 parse ("-v":_)          = Left "0.1.0.0"
 parse ("--version":_)   = Left "0.1.0.0"
 parse args = case args of
-               ("find":x:argv)  -> makeCommand (Find (read x :: Int)) argv
+               ("find":x:argv)  -> makeCommand (Find (read x :: Int32)) argv
                ("add":x:argv)   -> makeCommand (Add (read x :: String)) argv
-               ("complete":x:_) -> makeCommand (Complete (read x :: Int)) []
+               ("complete":x:_) -> makeCommand (Complete (read x :: Int32)) []
                ("list":argv)    -> makeCommand List argv
                _                -> Left "Unrecognized command or wrong \
                                         \number of arguments."

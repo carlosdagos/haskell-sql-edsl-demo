@@ -18,6 +18,7 @@ import           Database.HDBC.Record            (runQuery, runInsert
                                                  , runInsert)
 import           Database.Record                 (ToSql, FromSql)
 import           Data.Time.Calendar              (Day, fromGregorian)
+import           Data.Int                        (Int32)
 import qualified Data.ByteString.Char8 as B      (unpack, pack, split)
 import qualified HRR.Todo                   as T
 import qualified HRR.Hashtag                as H
@@ -26,9 +27,9 @@ import qualified HRR.Hashtag                as H
 -- | Commands available for the application
 data Command
     = List                  -- list
-    | Find Int              -- find
+    | Find Int32            -- find
     | Add String            -- add
-    | Complete Int          -- complete
+    | Complete Int32        -- complete
     deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -51,7 +52,7 @@ runAndPrintCommand :: (IConnection conn) => conn -> Command -> [Flag] -> IO ()
 runAndPrintCommand conn cmd flags
   = case cmd of
       List       -> runListCommand conn flags
-      Find _     -> putStrLn "find!"
+      Find x     -> runFindCommand conn x flags
       Add title  -> runAlternativeAddCommand conn title flags
       Complete _ -> putStrLn "complete!"
 
@@ -90,6 +91,19 @@ runAlternativeAddCommand conn title flags = do
     commit conn
     putStrLn (show i)
 
+
+runFindCommand :: (IConnection conn) => conn -> Int32 -> [Flag] -> IO ()
+runFindCommand conn x flags = do
+    let findQ = relation' . placeholder $ \ph -> do
+                 t <- query T.todo
+                 wheres $ t ! T.todoId' .=. ph
+                 return t
+
+    if Debug `elem` flags then
+        runDebug conn x findQ
+    else
+        run conn x findQ
+
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
 dueDateFromFlags :: [Flag] -> Day
@@ -101,7 +115,6 @@ dueDateFromFlags ((DueBy s):_) = fromGregorian year month day
                                    month = read (B.unpack (ymd !! 1)) :: Int
                                    day   = read (B.unpack (ymd !! 2)) :: Int
 dueDateFromFlags (_:xs)        = dueDateFromFlags xs
-
 
 --------------------------------------------------------------------------------
 -- | Run a relation to the connection but first log the relation
