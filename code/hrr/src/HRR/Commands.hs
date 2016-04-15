@@ -60,13 +60,21 @@ runAndPrintCommand conn cmd flags
       Add title  -> runAlternativeAddCommand conn title flags
       Complete x -> runCompleteCommand conn x
 
-
 runListCommand :: (IConnection conn) => conn -> [Flag] -> IO ()
 runListCommand conn flags = do
+    let q = if not (OrderByPriority `elem` flags) then
+                T.todo
+            else
+                -- FIXME: Manage to get NULLS LAST in order-by
+                relation $ do
+                    t <- query T.todo
+                    desc $ t ! T.prio'
+                    return t
+
     if Debug `elem` flags then
-        runDebug conn () T.todo
+        runDebug conn () q
     else
-        run conn () T.todo
+        run conn () q
 
 runAddCommand :: (IConnection conn) => conn -> String -> [Flag] -> IO ()
 runAddCommand conn title flags = do
@@ -74,8 +82,10 @@ runAddCommand conn title flags = do
     let insertR = relation . return $ T.PiTodo |$| value title
                                                |*| value dueDate
                                                |*| value (Just 11)
+
     let insertQ = derivedInsertQuery T.piTodo' insertR
     i <- runInsertQuery conn insertQ ()
+    -- FIXME: What about RETURNING id?
     commit conn
     putStrLn (show i)
 

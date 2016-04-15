@@ -432,6 +432,33 @@ $(defineTable "public" "todo" [''Show])
 
 ---
 
+## Haskell Relational Record (HRR)
+
+#### Important Operators
+
+- `(!)`
+- `(><)`
+- `(.=.)`
+- `.<.`, `.>.`, `.>=.`, `.<=.`
+
+#### Important data structures
+
+- `Relation p a`
+- `Pi p a`
+- `Query`, `InsertQuery`, `Update`...
+
+### Important Functions
+
+- `just`
+- `wheres`
+- `on`
+- `groupBy`
+- `in`
+- `or`
+- `asc`, `desc`
+
+---
+
 ## Opaleye
 
 ---
