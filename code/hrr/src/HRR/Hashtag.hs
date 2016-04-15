@@ -26,7 +26,7 @@ import Database.Relational.Query
 -- bizzare errors
 $(defineTable "public" "hashtag" [''Eq, ''Show])
 
---hashtagsForTodo :: Relation Int32 Hashtag
+hashtagsForTodo :: Relation Int32 Hashtag
 hashtagsForTodo = relation' . placeholder $ \ph -> do
     h <- query hashtag
     wheres $ h ! todoId' .=. ph
