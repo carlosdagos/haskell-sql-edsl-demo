@@ -2,15 +2,25 @@
 
 module Main where
 
-import Data.Int                     (Int32)
+import Data.Int
+       ( Int32 )
 import System.Exit
-import System.IO
+       ( exitWith, ExitCode(..) )
 import System.Environment
+       ( getArgs )
+import System.IO
+       ( hPutStrLn, stderr )
 import System.Console.GetOpt
+       ( getOpt, usageInfo, OptDescr(..)
+       , ArgOrder(..), ArgDescr(..) )
+import Database.HDBC.Session
+       ( withConnectionIO, handleSqlError' )
 import Database.HDBC.PostgreSQL
-import Database.HDBC.Session        (withConnectionIO, handleSqlError')
+       ( Connection )
 import HRR.DataSource
+       ( connect' )
 import HRR.Commands
+       ( Flag(..), Command(..), runAndPrintCommand )
 
 --------------------------------------------------------------------------------
 -- | Flags with their corresponding description

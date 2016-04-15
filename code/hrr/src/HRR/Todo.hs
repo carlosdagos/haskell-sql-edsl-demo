@@ -18,9 +18,12 @@ module HRR.Todo
     ) where
 
 import HRR.DataSource
-import GHC.Int                   (Int32)
-import Data.Time.Calendar        (Day)
-import Database.HDBC.Query.TH    (makeRecordPersistableDefault)
+import GHC.Int
+       ( Int32 )
+import Data.Time.Calendar
+       ( Day )
+import Database.HDBC.Query.TH
+       ( makeRecordPersistableDefault )
 import Database.Relational.Query
 
 

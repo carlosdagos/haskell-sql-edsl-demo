@@ -12,14 +12,18 @@ module HRR.Commands
     ) where
 
 import           Database.Relational.Query
-import           Database.HDBC                   (IConnection, SqlValue, commit)
-import           Database.HDBC.Record            (runQuery, runInsert
-                                                 , runInsertQuery
-                                                 , runInsert)
-import           Database.Record                 (ToSql, FromSql)
-import           Data.Time.Calendar              (Day, fromGregorian)
-import           Data.Int                        (Int32)
-import qualified Data.ByteString.Char8 as B      (unpack, pack, split)
+import           Database.HDBC
+                 ( IConnection, SqlValue, commit )
+import           Database.HDBC.Record
+                 ( runQuery, runInsert, runInsertQuery, runInsert)
+import           Database.Record
+                 ( ToSql, FromSql )
+import           Data.Time.Calendar
+                 ( Day, fromGregorian )
+import           Data.Int
+                 ( Int32 )
+import qualified Data.ByteString.Char8 as B
+                 ( unpack, pack, split )
 import qualified HRR.Todo                   as T
 import qualified HRR.Hashtag                as H
 
