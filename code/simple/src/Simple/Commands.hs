@@ -9,16 +9,22 @@ module Simple.Commands
     , Flag(..)
     ) where
 
-import System.IO
-import System.Exit
-import Data.Time.Calendar                        (fromGregorian)
-import Data.Maybe                                (fromJust)
-import Data.List                                 (intercalate)
-import qualified Data.ByteString.Char8 as B      (unpack, pack, split)
+import           System.IO
+import           System.Exit
+import           Data.Time.Calendar
+                 ( fromGregorian )
+import           Data.Maybe
+                 ( fromJust )
+import           Data.List
+                 ( intercalate )
+import qualified Data.ByteString.Char8 as B
+                 ( unpack, pack, split )
 import qualified Simple.Todo as T
 import qualified Simple.Hashtag as H
-import           Database.PostgreSQL.Simple      (Connection, Only(..))
-import           Database.PostgreSQL.Simple.Time (Date, parseDate)
+import           Database.PostgreSQL.Simple
+                 ( Connection, Only(..) )
+import           Database.PostgreSQL.Simple.Time
+                 ( Date, parseDate )
 
 --------------------------------------------------------------------------------
 -- | Commands available for the application

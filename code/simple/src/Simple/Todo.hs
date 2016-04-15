@@ -18,13 +18,19 @@ module Simple.Todo
     , allLateTodos
     ) where
 
-import GHC.Int                            (Int64)
+import GHC.Int
+       ( Int64 )
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromRow (fromRow, field)
-import Database.PostgreSQL.Simple.ToRow   (toRow)
-import Database.PostgreSQL.Simple.ToField (toField)
-import Database.PostgreSQL.Simple.Time    (Date)
-import Database.PostgreSQL.Simple.SqlQQ   (sql)
+import Database.PostgreSQL.Simple.FromRow
+       ( fromRow, field )
+import Database.PostgreSQL.Simple.ToRow
+       ( toRow )
+import Database.PostgreSQL.Simple.ToField
+       ( toField )
+import Database.PostgreSQL.Simple.Time
+       ( Date )
+import Database.PostgreSQL.Simple.SqlQQ
+       ( sql )
 
 data Todo = Todo { getId       :: !(Maybe Int) -- Can be null
                  , getTitle    :: !String      -- Title of the todo
