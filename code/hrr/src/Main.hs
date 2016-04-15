@@ -8,6 +8,8 @@ import System.IO
 import System.Environment
 import System.Console.GetOpt
 import Database.HDBC.PostgreSQL
+import Database.HDBC.Session        (withConnectionIO, handleSqlError')
+import HRR.DataSource
 import HRR.Commands
 
 --------------------------------------------------------------------------------
@@ -70,8 +72,7 @@ getResults conn (Right (c, flags')) = runAndPrintCommand conn c flags'
                                    >> exitWith ExitSuccess
 
 main :: IO ()
-main = do
+main = handleSqlError' $ withConnectionIO connect' $ \conn -> do
     parsed <- return . parse =<< getArgs
-    conn   <- connectPostgreSQL "dbname=postgres"
     getResults conn parsed
 

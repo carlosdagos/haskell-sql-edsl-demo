@@ -3,6 +3,7 @@
 module HRR.DataSource
      ( -- Exports
        defineTable
+     , connect'
      ) where
 
 import Language.Haskell.TH
