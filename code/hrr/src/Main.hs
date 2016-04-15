@@ -11,8 +11,7 @@ import System.Environment
 import System.IO
        ( hPutStrLn, stderr )
 import System.Console.GetOpt
-       ( getOpt, usageInfo, OptDescr(..)
-       , ArgOrder(..), ArgDescr(..) )
+       ( getOpt, usageInfo, OptDescr(..) , ArgOrder(..), ArgDescr(..) )
 import Database.HDBC.Session
        ( withConnectionIO, handleSqlError' )
 import Database.HDBC.PostgreSQL
