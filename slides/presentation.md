@@ -436,15 +436,15 @@ $(defineTable "public" "todo" [''Show])
 
 #### Important Operators
 
-- `(!)`
-- `(><)`
-- `(.=.)`
-- `.<.`, `.>.`, `.>=.`, `.<=.`
+- `!`
+- `><`
+- `.<.`, `.>.`, `.>=.`, `.<=.`, `.=.`
 
 #### Important data structures
 
-- `Relation p a`
 - `Pi p a`
+- `Relation p a`
+- `Projection c a`
 - `Query`, `InsertQuery`, `Update`...
 
 ### Important Functions
