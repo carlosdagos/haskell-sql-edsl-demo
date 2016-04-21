@@ -11,10 +11,10 @@ module Simple.Commands
 
 import           System.IO
 import           System.Exit
+import           Data.Maybe
+                 ( isJust, fromJust )
 import           Data.Time.Calendar
                  ( fromGregorian )
-import           Data.Maybe
-                 ( fromJust )
 import           Data.List
                  ( intercalate )
 import qualified Data.ByteString.Char8 as B
@@ -104,12 +104,11 @@ runCompleteCommand c tid = do
     if isJust maybeTodo then
         hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
     else if affected > 0 then
-        putStrLn unwords
+        putStrLn $ unwords
             [ "👍 Completed"
             , "'" ++ T.getTitle (fromJust maybeTodo)
             , showHashtags hashtags ++ "'"
             ]
-        >> exitSuccess
     else
         hPutStrLn stderr "Error: Something went wrong!"
      >> exitWith (ExitFailure 1)
@@ -129,10 +128,10 @@ printTodo flags c todo = do
                 else
                    return [] :: IO [H.Hashtag]
 
-    putStrLn unwords
+    putStrLn $ unwords
         [ (show . fromJust $ T.getId todo) ++ ". "
         , T.getTitle todo
-        , "(due by: " ++ show $ T.getDueDate todo ++ ")"
+        , "(due by: " ++ show (T.getDueDate todo) ++ ")"
         , "(priority: " ++ maybe "-" show (T.getPrio todo) ++ ")"
         , showHashtags hashtags
         ]

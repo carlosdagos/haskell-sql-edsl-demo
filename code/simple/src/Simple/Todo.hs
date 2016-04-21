@@ -20,6 +20,8 @@ module Simple.Todo
 
 import GHC.Int
        ( Int64 )
+import Data.Maybe
+       ( isNothing )
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromRow
        ( fromRow, field )
