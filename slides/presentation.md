@@ -184,7 +184,7 @@ create table hashtags(
 
 ## Sample application and design
 
-#### (Some of the queries we'll need
+#### (Some of the) queries we'll need
 
 To see all our TODOs
 ```sql
@@ -206,7 +206,7 @@ insert into todos (title, due_date, prority) values (?, ?, ?)
 
 ## Sample application and design
 
-#### Database design
+#### (Some of the) queries we'll need
 
 List TODOs that are due by a specific date
 ```sql
@@ -232,7 +232,8 @@ and   t.due_date = ?
 
 ## Sample application and design
 
-In short, we'll plenty of queries to match all the possible combinations of flags that I can accept.
+In short, we'll need plenty of queries to match all the possible combinations
+of flags that I can accept.
 
 - I can compose flags
 - Can I compose my queries?
@@ -358,17 +359,29 @@ wish we could address:
 #### Problems
 
 - I'm repeating myself constantly.
+
 - My queries are almost always the same, varying in by restriction, or order
 specification.
+
 - "QuasiQuoted" strings are hard to concatenate... but do we really want
 ease of concatenation? **NO!** `sql`-QuasiQuotes are hard to concatenate on
 purpose!
+
 - My `FromRow` and `ToRow` instances will be constantly in need of updates
 as the requirements change.
+
+---
+
+## Current state of things
+
+#### Problems (cont.)
+
 - `field` functions provide a convenient row parser, however the result is not
 very semantically-meaningful.
+
 - I could write an query in a quasiquote and not know that anything is wrong
 until I run it.
+
 - I have no guarantee that I'm typing a type-safe query (i.e. The `getDate`
 from `Todo` could be a `String`, and my program would compile, but it would
 not crash until I run it, since the field in the table is defined as a `date`.
@@ -408,25 +421,58 @@ getBadTodos
 
 ## Haskell Relational Record (HRR)
 
+- Developed by the good people at Asahi Net, Inc
+
+- Developed from scratch as a response to some issues they found
+using HaskellDB
+
+- Mainly:
+   - Semantics of aggregate queries
+   - Name conflicts when composing queries
+
+
+---
+
+## Haskell Relational Record (HRR)
+
 #### My new definition for `Todo`
+
+```haskell
+-- file hrr/src/HRR/DataSource.hs
+-- ... imports ...
+connect' :: IO Connection
+connect' = connectPostgreSQL "dbname=postgres"
+
+defineTable :: String -> -- ^ Schema name
+               String -> -- ^ Table name
+               [Name] -> -- ^ Derives
+               Q [Dec]   -- ^ Quoted result
+defineTable = defineTableFromDB connect' driverPostgreSQL
+```
 
 ```haskell
 -- file hrr/src/HRR/Todo.hs
 {-# LANGUAGE TemplateHaskell #-}
-```
-```haskell
+
 import HRR.DataSource
 
 $(defineTable "public" "todo" [''Show])
 ```
 
+---
+## Haskell Relational Record (HRR)
+
 #### What happened?
 
 - HRR will use TH to generate our data declaration
+
 - A database connection will be needed on compilation time
+
 - Our data declartion will have the fields of the table in CamelCase
+
 - I did have to define the `defineTable` method, see file
 `hrr/src/HRR/DataSource.hs`, with PostgreSQL-specific functions.
+
 - Some "queries" will be generated for me already, namely: `todo`, `insertTodo`,
 `selectTodo`, `updateTodo`, ...
 
@@ -434,6 +480,37 @@ $(defineTable "public" "todo" [''Show])
 
 ## Haskell Relational Record (HRR)
 
+#### I now "have"
+
+```haskell
+ghci> :t Todo
+Todo :: Int32         -- ^ The Todo id   | todoId  :: Todo -> Int32
+     -> Day           -- ^ The date      | dueDate :: Todo -> Day
+     -> String        -- ^ The title     | title   :: Todo -> String
+     -> Maybe Int32   -- ^ The priority  | prio    :: Todo -> Maybe Int32
+     -> Todo
+
+ghci> :t todo
+todo :: Relation () Todo
+
+ghci> show todo
+"SELECT todo_id, due_date, title, prio FROM PUBLIC.todo"
+
+ghci> :t selectTodo
+selectTodo :: Query Int32 Todo
+
+ghci> :t updateTodo
+updateTodo :: KeyUpdate Int32 Todo
+
+ghci> :t insertTodo
+insertTodo :: Insert Todo
+
+```
+---
+
+## Haskell Relational Record (HRR)
+
+.pull-left[
 #### Important Operators
 
 - `!`
@@ -446,8 +523,10 @@ $(defineTable "public" "todo" [''Show])
 - `Relation p a`
 - `Projection c a`
 - `Query`, `InsertQuery`, `Update`...
+]
 
-### Important Functions
+.pull-right[
+#### Important Functions
 
 - `just`
 - `wheres`
@@ -457,6 +536,16 @@ $(defineTable "public" "todo" [''Show])
 - `or`
 - `asc`, `desc`
 
+#### Important typeclasses
+
+- `MonadQuery`, a typeclass
+- `MonadAggregate`, a typeclass
+
+### Important instances
+
+- `QueryJoin`, `Orderings`, `Restrictings` => `MonadQuery`
+- `Orderings`, `Restrictings` => `MonadAggregate`
+]
 ---
 
 ## Opaleye
