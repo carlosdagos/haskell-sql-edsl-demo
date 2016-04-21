@@ -5,7 +5,7 @@ module Main where
 import Data.Int
        ( Int32 )
 import System.Exit
-       ( exitWith, ExitCode(..) )
+       ( exitWith, exitSuccess, ExitCode(..) )
 import System.Environment
        ( getArgs )
 import System.IO
