@@ -51,10 +51,10 @@ instance ToRow Todo where
               ]
 
 instance Eq Todo where
-    t1 == t2 = (getId t1) == (getId t2)
+    t1 == t2 = getId t1 == getId t2
 
 isNew :: Todo -> Bool
-isNew t = Nothing == getId t
+isNew t = isNothing (getId t)
 
 allTodos :: Connection -> IO [Todo]
 allTodos conn = query_ conn q

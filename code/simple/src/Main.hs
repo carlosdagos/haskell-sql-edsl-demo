@@ -37,7 +37,7 @@ header = "todos <command> [options]\n\n\
 --------------------------------------------------------------------------------
 -- | Parse the command and the corresponding flags (if any)
 parse :: [String] -> Either String (Command, [Flag])
--- Simple parsing of commands
+-- | Simple parsing of commands
 parse []                = Left "Wrong number of arguments."
 parse ("-h":_)          = Left (usageInfo header flags)
 parse ("--help":_)      = Left (usageInfo header flags)
@@ -59,15 +59,15 @@ makeCommand c argv = case getOpt Permute flags argv of
 --------------------------------------------------------------------------------
 -- | Gets the results of a command and its corresponding flags
 getResults :: Connection -> Either String (Command, [Flag]) -> IO ()
--- An error happened
+-- | An error happened
 getResults _ (Left s) = hPutStrLn stderr s
                      >> exitWith (ExitFailure 1)
--- We have an appropriate command and its results
+-- | We have an appropriate command and its results
 getResults conn (Right (c, flags')) = runAndPrintCommand conn c flags'
-                                   >> exitWith ExitSuccess
+                                   >> exitSuccess
 
 main :: IO ()
 main = do
-    parsed <- return . parse =<< getArgs
+    parsed <- fmap parse getArgs
     conn   <- connect defaultConnectInfo
     getResults conn parsed

@@ -29,23 +29,23 @@ import           Database.PostgreSQL.Simple.Time
 --------------------------------------------------------------------------------
 -- | Commands available for the application
 data Command
-    = List                  -- list
-    | Find Int              -- find
-    | Add String            -- add
-    | Complete Int          -- complete
+    = List                  -- ^ "list" command
+    | Find Int              -- ^ "find" command
+    | Add String            -- ^ "add" command
+    | Complete Int          -- ^ "complete" command
     deriving (Show)
 
 --------------------------------------------------------------------------------
 -- | Flags available for the app
 data Flag
-    = DueBy String          --due-by
-    | Late                  --late
-    | WithHashtags          --with-hashtags
-    | SearchHashtag String  --hashtags
-    | OrderByPriority       --order-by-priority
-    | SetPriority String    --priority
-    | Help                  --help
-    | Version               --version
+    = DueBy String          -- ^ --due-by
+    | Late                  -- ^ --late
+    | WithHashtags          -- ^ --with-hashtags
+    | SearchHashtag String  -- ^ --hashtags
+    | OrderByPriority       -- ^ --order-by-priority
+    | SetPriority String    -- ^ --priority
+    | Help                  -- ^ --help
+    | Version               -- ^ --version
     deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ runFindCommand c tid _ = do
     maybeTodo <- T.findTodo c tid
     hashtags  <- H.allHashtagsForTodo c tid
 
-    if maybeTodo /= Nothing then
+    if isJust maybeTodo then
         let todo = fromJust maybeTodo in
         putStrLn $ unlines [ "Todo: "     ++ show tid
                            , "Title: "    ++ T.getTitle todo
@@ -78,8 +78,8 @@ runFindCommand c tid _ = do
 runAddCommand :: Connection -> String -> [Flag] -> IO ()
 runAddCommand c desc flags = do
     let priority = prioFromFlags flags
-    let dueDate  = either (\e -> error e) id (dueDateFromFlags flags)
-    let todo = if priority /= Nothing then
+    let dueDate  = either error id (dueDateFromFlags flags)
+    let todo = if isJust priority then
                   T.Todo { T.getId      = Nothing
                          , T.getTitle   = desc
                          , T.getDueDate = dueDate
@@ -93,7 +93,7 @@ runAddCommand c desc flags = do
                          }
 
     Only tid <- T.addTodo c todo
-    putStrLn (intercalate " " ["Added todo", show tid])
+    putStrLn (unwords ["Added todo", show tid])
 
 runCompleteCommand :: Connection -> Int -> IO ()
 runCompleteCommand c tid = do
@@ -101,15 +101,15 @@ runCompleteCommand c tid = do
     hashtags  <- H.allHashtagsForTodo c tid
     affected  <- T.deleteTodo c tid
 
-    if maybeTodo == Nothing then
+    if isJust maybeTodo then
         hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
-    else if (affected > 0) then
-        (putStrLn $ intercalate " "
+    else if affected > 0 then
+        putStrLn unwords
             [ "👍 Completed"
             , "'" ++ T.getTitle (fromJust maybeTodo)
             , showHashtags hashtags ++ "'"
-            ])
-        >> exitWith ExitSuccess
+            ]
+        >> exitSuccess
     else
         hPutStrLn stderr "Error: Something went wrong!"
      >> exitWith (ExitFailure 1)
@@ -129,11 +129,11 @@ printTodo flags c todo = do
                 else
                    return [] :: IO [H.Hashtag]
 
-    putStrLn $ intercalate " " $
+    putStrLn unwords
         [ (show . fromJust $ T.getId todo) ++ ". "
         , T.getTitle todo
-        , "(due by: " ++ (show $ T.getDueDate todo) ++ ")"
-        , "(priority: " ++ (maybe "-" show (T.getPrio todo)) ++ ")"
+        , "(due by: " ++ show $ T.getDueDate todo ++ ")"
+        , "(priority: " ++ maybe "-" show (T.getPrio todo) ++ ")"
         , showHashtags hashtags
         ]
 
@@ -145,18 +145,19 @@ showHashtags hs = intercalate ", " $ map H.getHashtag hs
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
 dueDateFromFlags :: [Flag] -> Either String Date
-dueDateFromFlags []            = error "Must specify due date!"
-dueDateFromFlags ((DueBy s):_) = parseDate (B.pack $ show (fromGregorian year month day))
+dueDateFromFlags []           = error "Must specify due date!"
+dueDateFromFlags (DueBy s:_) = parseDate (B.pack $ show (fromGregorian year month day))
                                  where
                                    ymd   = B.split '-' (B.pack s)
                                    year  = read (B.unpack (ymd !! 0)) :: Integer
                                    month = read (B.unpack (ymd !! 1)) :: Int
                                    day   = read (B.unpack (ymd !! 2)) :: Int
-dueDateFromFlags (_:xs)        = dueDateFromFlags xs
+dueDateFromFlags (_:xs)       = dueDateFromFlags xs
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the priority setting from the list of flags
 prioFromFlags :: [Flag] -> Maybe Int
-prioFromFlags []                  = Nothing
-prioFromFlags ((SetPriority p):_) = Just (read p :: Int)
-prioFromFlags (_:xs)              = prioFromFlags xs
+prioFromFlags []                = Nothing
+prioFromFlags (SetPriority p:_) = Just (read p :: Int)
+prioFromFlags (_:xs)            = prioFromFlags xs
+

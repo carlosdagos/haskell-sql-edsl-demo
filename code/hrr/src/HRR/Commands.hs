@@ -62,7 +62,7 @@ runAndPrintCommand conn cmd flags
 
 runListCommand :: (IConnection conn) => conn -> [Flag] -> IO ()
 runListCommand conn flags = do
-    let q = if not (OrderByPriority `elem` flags) then
+    let q = if OrderByPriority `notElem` flags then
                 T.todo
             else
                 -- FIXME: Manage to get NULLS LAST in order-by
@@ -87,7 +87,7 @@ runAddCommand conn title flags = do
     i <- runInsertQuery conn insertQ ()
     -- FIXME: What about RETURNING id?
     commit conn
-    putStrLn (show i)
+    print i
 
 --------------------------------------------------------------------------------
 -- | Alternative insert command avoiding the use of hrr "applicatives", would
@@ -97,61 +97,67 @@ runAlternativeAddCommand :: (IConnection conn)
 runAlternativeAddCommand conn title flags = do
     let dueDate    = dueDateFromFlags flags
     let insertTodo = derivedInsertValue $ do
-                        T.title'   <-# (value title)
-                        T.dueDate' <-# (value dueDate)
-                        T.prio'    <-# (value (Just 11))
+                        T.title'   <-# value title
+                        T.dueDate' <-# value dueDate
+                        T.prio'    <-# value (Just 11)
                         return unitPlaceHolder
     i <- runInsert conn insertTodo ()
     commit conn
-    putStrLn (show i)
+    print i
 
 
 runFindCommand :: (IConnection conn) => conn -> Int32 -> [Flag] -> IO ()
-runFindCommand conn x flags = do
-    let findQ = relation' . placeholder $ \ph -> do
-                 t <- query T.todo
-                 wheres $ t ! T.todoId' .=. ph
-                 return t
-
+runFindCommand conn x flags =
     if Debug `elem` flags then
-        runDebug conn x findQ
+        runQDebug conn x T.selectTodo
     else
-        run conn x findQ
+        runQ conn x T.selectTodo
 
 runCompleteCommand :: (IConnection conn) => conn -> Int32 -> IO ()
 runCompleteCommand conn x = do
     let deleteQ = typedDelete T.tableOfTodo . restriction $
-                    \projection -> do
+                    \projection ->
                         wheres $ projection ! T.todoId' .=. value x
 
-    putStrLn (show deleteQ)
+    print deleteQ
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
 dueDateFromFlags :: [Flag] -> Day
-dueDateFromFlags []            = error "Must specify due date!"
-dueDateFromFlags ((DueBy s):_) = fromGregorian year month day
+dueDateFromFlags []           = error "Must specify due date!"
+dueDateFromFlags (DueBy s:_) = fromGregorian year month day
                                  where
                                    ymd   = B.split '-' (B.pack s)
                                    year  = read (B.unpack (ymd !! 0)) :: Integer
                                    month = read (B.unpack (ymd !! 1)) :: Int
                                    day   = read (B.unpack (ymd !! 2)) :: Int
-dueDateFromFlags (_:xs)        = dueDateFromFlags xs
+dueDateFromFlags (_:xs)       = dueDateFromFlags xs
 
 --------------------------------------------------------------------------------
 -- | Run a relation to the connection but first log the relation
 runDebug :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
          => conn -> p -> Relation p a -> IO ()
-runDebug conn param rel = do
-  putStrLn $ "sql debug: " ++ show rel
-  records <- runQuery conn (relationalQuery rel) param
-  mapM_ print records
+runDebug conn param rel = runQDebug conn param (relationalQuery rel)
 
 --------------------------------------------------------------------------------
 -- | Run a relation to the connection
 run :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
     => conn -> p -> Relation p a -> IO ()
-run conn param rel = do
-  records <- runQuery conn (relationalQuery rel) param
+run conn param rel = runQ conn param (relationalQuery rel)
+
+--------------------------------------------------------------------------------
+-- | Run a relation to the connection but first log the relation
+runQDebug :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
+          => conn -> p -> Query p a -> IO ()
+runQDebug conn param rel = do
+  putStrLn $ "sql debug: " ++ show rel
+  records <- runQuery conn rel param
   mapM_ print records
 
+--------------------------------------------------------------------------------
+-- | Run a relation to the connection
+runQ :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
+    => conn -> p -> Query p a -> IO ()
+runQ conn param rel = do
+  records <- runQuery conn rel param
+  mapM_ print records

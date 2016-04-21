@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
 module HRR.Hashtag
-    ( -- Exports
+    ( -- * Exports
       Hashtag(..)
     , hashtag
     , todoId'
@@ -22,8 +22,8 @@ import Database.Relational.Query
        ( relation', placeholder, wheres, query
        , (.=.), (!), value, Relation(..) )
 
--- Make sure the table is defined first, otherwise you'll get some very
--- bizzare errors
+-- | Make sure the table is defined first, otherwise you'll get some very
+-- | bizzare errors
 $(defineTable "public" "hashtag" [''Eq, ''Show])
 
 hashtagsForTodo :: Relation Int32 Hashtag
