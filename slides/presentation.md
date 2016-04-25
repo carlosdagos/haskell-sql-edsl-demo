@@ -33,7 +33,7 @@ I'm Carlos.
 
 I've been paid to write Java, Scala and PHP.
 
-I've been kindly asked to write Ruby, Python, Clojure, Objective-C.
+I've been kindly asked to write Ruby, Python, Clojure, Objective-C, others...
 
 I'm in (newfound) love with Haskell.
 ]
@@ -48,7 +48,8 @@ We're concerned with results rather than performance.
 
 #### Not about ORMs
 
-Generating queries is not about mapping data types to database rows.
+Generating queries is not about mapping data types to database rows, we also
+have a need for aggregation, counting, reports...
 
 #### PostgreSQL
 
@@ -423,13 +424,11 @@ getBadTodos
 
 - Developed by the good people at Asahi Net, Inc
 
-- Developed from scratch as a response to some issues they found
-using HaskellDB
+- Developed from scratch as a response to some issues found using HaskellDB
 
 - Mainly:
    - Semantics of aggregate queries
    - Name conflicts when composing queries
-
 
 ---
 
@@ -468,13 +467,15 @@ $(defineTable "public" "todo" [''Show])
 
 - A database connection will be needed on compilation time
 
-- Our data declartion will have the fields of the table in CamelCase
+- Our data declaration will have the fields of the table in CamelCase
 
 - I did have to define the `defineTable` method, see file
 `hrr/src/HRR/DataSource.hs`, with PostgreSQL-specific functions.
 
 - Some "queries" will be generated for me already, namely: `todo`, `insertTodo`,
 `selectTodo`, `updateTodo`, ...
+
+- I also have my `Pi`s! Or the indexes of my tables
 
 ---
 
@@ -483,6 +484,7 @@ $(defineTable "public" "todo" [''Show])
 #### I now "have"
 
 ```haskell
+
 ghci> :t Todo
 Todo :: Int32         -- ^ The Todo id   | todoId  :: Todo -> Int32
      -> Day           -- ^ The date      | dueDate :: Todo -> Day
@@ -510,11 +512,36 @@ insertTodo :: Insert Todo
 
 ## Haskell Relational Record (HRR)
 
+About those `Pi`s
+
+```haskell
+
+ghci> :t todoId'
+todoId' :: Database.Relational.Query.Pi.Unsafe.Pi Todo Int32
+
+ghci> :t dueDate'
+dueDate'
+  :: Database.Relational.Query.Pi.Unsafe.Pi
+       Todo time-1.5.0.1:Data.Time.Calendar.Days.Day
+
+ghci> :t prio'
+prio' :: Database.Relational.Query.Pi.Unsafe.Pi Todo (Maybe Int32)
+
+ghci> :t title'
+title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
+
+```
+
+---
+
+## Haskell Relational Record (HRR)
+
 .pull-left[
 #### Important Operators
 
 - `!`
 - `><`
+- `|$|`, `|*|`
 - `.<.`, `.>.`, `.>=.`, `.<=.`, `.=.`
 
 #### Important data structures
@@ -546,6 +573,18 @@ insertTodo :: Insert Todo
 - `QueryJoin`, `Orderings`, `Restrictings` => `MonadQuery`
 - `Orderings`, `Restrictings` => `MonadAggregate`
 ]
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Simple queries
+
+#### Blocks of composability
+
+#### Composing queries
+
+
 ---
 
 ## Opaleye

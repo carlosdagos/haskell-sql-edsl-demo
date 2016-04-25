@@ -10,11 +10,15 @@ module HRR.Todo
     , title'
     , prio'
     , todo
+    , todosByPriority
     , tableOfTodo
     , insertTodo
     , insertQueryTodo
     , selectTodo
     , updateTodo
+    , piTodoDate'
+    , piTodoTitle'
+    , piTodoPrio'
     ) where
 
 import HRR.DataSource
@@ -37,6 +41,12 @@ import Database.Relational.Query
 
 $(defineTable "public" "todo" [''Show])
 
+todosByPriority :: Relation () Todo
+todosByPriority = relation $ do
+    t <- query todo
+    desc $ t ! prio'
+    return t
+
 instance Eq Todo where
     t1 == t2 = todoId t1 == todoId t2
 
@@ -47,6 +57,7 @@ data PiTodo = PiTodo { piTodoTitle :: String
 
 $(makeRecordPersistableDefault ''PiTodo)
 
+-- Constructor method for partial insertions
 piTodo' :: Pi Todo PiTodo
 piTodo' = PiTodo |$| title'
                  |*| dueDate'

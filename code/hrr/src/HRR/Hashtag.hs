@@ -20,7 +20,7 @@ import HRR.DataSource
        ( defineTable )
 import Database.Relational.Query
        ( relation', placeholder, wheres, query
-       , (.=.), (!), value, Relation(..) )
+       , (.=.), (!), Relation )
 
 -- | Make sure the table is defined first, otherwise you'll get some very
 -- | bizzare errors

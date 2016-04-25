@@ -15,13 +15,15 @@ import           Database.Relational.Query
 import           Database.HDBC
                  ( IConnection, SqlValue, commit )
 import           Database.HDBC.Record
-                 ( runQuery, runInsert, runInsertQuery, runInsert)
+                 ( runQuery, runInsert, runInsertQuery, runInsert, runDelete )
 import           Database.Record
                  ( ToSql, FromSql )
 import           Data.Time.Calendar
                  ( Day, fromGregorian )
 import           Data.Int
                  ( Int32 )
+import           Data.List
+                 ( intercalate )
 import qualified Data.ByteString.Char8 as B
                  ( unpack, pack, split )
 import qualified HRR.Todo                   as T
@@ -62,79 +64,164 @@ runAndPrintCommand conn cmd flags
 
 runListCommand :: (IConnection conn) => conn -> [Flag] -> IO ()
 runListCommand conn flags = do
-    let q = if OrderByPriority `notElem` flags then
+    let q = relationalQuery $ if OrderByPriority `notElem` flags then
                 T.todo
             else
-                -- FIXME: Manage to get NULLS LAST in order-by
-                relation $ do
-                    t <- query T.todo
-                    desc $ t ! T.prio'
-                    return t
+                T.todosByPriority
 
     if Debug `elem` flags then
-        runDebug conn () q
+        runQDebugPrint conn () q (printTodoList conn flags)
     else
-        run conn () q
+        runQPrint conn () q (printTodoList conn flags)
+
+--------------------------------------------------------------------------------
+-- | Add command
+insertTodo :: InsertQuery T.PiTodo -- An insert query to be bound by a partial
+insertTodo = derivedInsertQuery T.piTodo' . relation' $
+    placeholder $ \ph ->
+        return $ T.PiTodo |$| ph ! T.piTodoTitle'
+                          |*| ph ! T.piTodoDate'
+                          |*| ph ! T.piTodoPrio'
 
 runAddCommand :: (IConnection conn) => conn -> String -> [Flag] -> IO ()
 runAddCommand conn title flags = do
-    let dueDate = dueDateFromFlags flags
-    let insertR = relation . return $ T.PiTodo |$| value title
-                                               |*| value dueDate
-                                               |*| value (Just 11)
+    let prio       = prioFromFlags flags
+    let dueDate    = dueDateFromFlags flags
 
-    let insertQ = derivedInsertQuery T.piTodo' insertR
-    i <- runInsertQuery conn insertQ ()
+    -- I can build now my partial object
+    let piToInsert = T.PiTodo { T.piTodoTitle = title
+                              , T.piTodoDate  = dueDate
+                              , T.piTodoPrio  = prio
+                              }
+
+    i <- runInsertQuery conn insertTodo piToInsert
     -- FIXME: What about RETURNING id?
     commit conn
     print i
 
 --------------------------------------------------------------------------------
--- | Alternative insert command avoiding the use of hrr "applicatives", would
--- | remove the need to declare the Pi datas for partial record information
+-- | Alternative insert command avoiding the use of hrr "applicatives",
+-- | avoids creating partial datas for inserts, and is useful for updates
+-- | with 'derivedUpdate' function
+-- |
+-- | In the examples, derivedInsert is always used with the 'value' function
+-- | but it's normally a better idea to let the database drivers do the
+-- | binding when data comes from the "outside"
+insertTodoAlt :: Insert ((String, Day), Maybe Int32)
+insertTodoAlt = derivedInsertValue $ do
+    (phTitle, ())   <- placeholder (\ph -> T.title'   <-# ph)
+    (phDueDate, ()) <- placeholder (\ph -> T.dueDate' <-# ph)
+    (phPrio, ())    <- placeholder (\ph -> T.prio'    <-# ph)
+    return (phTitle >< phDueDate >< phPrio)
+
 runAlternativeAddCommand :: (IConnection conn)
                          => conn -> String -> [Flag] -> IO ()
 runAlternativeAddCommand conn title flags = do
-    let dueDate    = dueDateFromFlags flags
-    let insertTodo = derivedInsertValue $ do
-                        T.title'   <-# value title
-                        T.dueDate' <-# value dueDate
-                        T.prio'    <-# value (Just 11)
-                        return unitPlaceHolder
-    i <- runInsert conn insertTodo ()
+    let dueDate  = dueDateFromFlags flags
+    let priority = prioFromFlags flags
+    i <- runInsert conn insertTodoAlt ((title, dueDate), priority)
     commit conn
     print i
 
-
+--------------------------------------------------------------------------------
+-- | Find a todo
 runFindCommand :: (IConnection conn) => conn -> Int32 -> [Flag] -> IO ()
 runFindCommand conn x flags =
     if Debug `elem` flags then
-        runQDebug conn x T.selectTodo
+        runQDebugPrint conn x T.selectTodo (printTodo conn flags)
     else
-        runQ conn x T.selectTodo
+        runQPrint conn x T.selectTodo (printTodo conn flags)
+
+printTodo :: (IConnection conn) => conn -> [Flag] -> T.Todo -> IO ()
+printTodo conn flags t = do
+    hashtags <- if WithHashtags `elem` flags then
+                    let tid = T.todoId t in
+                    runQuery conn (relationalQuery findHashtagsForTodo) tid
+                else
+                    return []
+
+    putStrLn $ intercalate "\n"
+        [
+          "id: " ++ show (T.todoId t)
+        , "title: " ++ T.title t
+        , "due by : " ++ show (T.dueDate t)
+        , "priority: " ++ maybe "-" show (T.prio t)
+        , "hashtags: " ++ intercalate ", " (map H.hashtagStr hashtags)
+        ]
+
+printTodoList :: (IConnection conn) => conn -> [Flag] -> T.Todo -> IO ()
+printTodoList conn flags t = do
+    let withH = WithHashtags `elem` flags
+    hashtags <- if withH then
+                    let tid = T.todoId t in
+                    runQuery conn (relationalQuery findHashtagsForTodo) tid
+                else
+                    return []
+
+    if withH then
+        putStrLn $ unwords
+            [
+              "id: " ++ show (T.todoId t)
+            , "title: " ++ T.title t
+            , "due by : " ++ show (T.dueDate t)
+            , "priority: " ++ maybe "-" show (T.prio t)
+            , "hashtags: " ++ intercalate ", " (map H.hashtagStr hashtags)
+            ]
+    else
+         putStrLn $ unwords
+            [
+              "id: " ++ show (T.todoId t)
+            , "title: " ++ T.title t
+            , "due by : " ++ show (T.dueDate t)
+            , "priority: " ++ maybe "-" show (T.prio t)
+            ]
+
+findHashtagsForTodo :: Relation Int32 H.Hashtag
+findHashtagsForTodo = relation' . placeholder $ \ph -> do
+    hashtags <- query H.hashtag
+    wheres $ hashtags ! H.todoId' .=. ph
+    return hashtags
+
+--------------------------------------------------------------------------------
+-- | Delete a todo
+deleteTodo :: Delete Int32
+deleteTodo = derivedDelete $ \projection ->
+                fst <$> placeholder
+                    (\ph -> wheres $ projection ! T.todoId' .=. ph)
 
 runCompleteCommand :: (IConnection conn) => conn -> Int32 -> IO ()
 runCompleteCommand conn x = do
-    let deleteQ = typedDelete T.tableOfTodo . restriction $
-                    \projection ->
-                        wheres $ projection ! T.todoId' .=. value x
+    todos <- runQuery conn T.selectTodo x
+    i     <- runDelete conn deleteTodo x
 
-    print deleteQ
+    if i > 0 then
+        putStrLn ("Compeleted todo " ++ T.title (head todos))
+    else
+        putStrLn ("Could not complete todo " ++ show x)
+
+    commit conn
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
 dueDateFromFlags :: [Flag] -> Day
-dueDateFromFlags []           = error "Must specify due date!"
+dueDateFromFlags []          = error "Must specify due date!"
 dueDateFromFlags (DueBy s:_) = fromGregorian year month day
                                  where
                                    ymd   = B.split '-' (B.pack s)
-                                   year  = read (B.unpack (ymd !! 0)) :: Integer
+                                   year  = read (B.unpack (head ymd)) :: Integer
                                    month = read (B.unpack (ymd !! 1)) :: Int
                                    day   = read (B.unpack (ymd !! 2)) :: Int
-dueDateFromFlags (_:xs)       = dueDateFromFlags xs
+dueDateFromFlags (_:xs)      = dueDateFromFlags xs
 
 --------------------------------------------------------------------------------
--- | Run a relation to the connection but first log the relation
+-- | Helper function to get the priority setting from the list of flags
+prioFromFlags :: [Flag] -> Maybe Int32
+prioFromFlags []                = Nothing
+prioFromFlags (SetPriority p:_) = Just (read p :: Int32)
+prioFromFlags (_:xs)            = prioFromFlags xs
+
+--------------------------------------------------------------------------------
+-- | Run a relation to the connection but first log the query to stdout
 runDebug :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
          => conn -> p -> Relation p a -> IO ()
 runDebug conn param rel = runQDebug conn param (relationalQuery rel)
@@ -146,7 +233,7 @@ run :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
 run conn param rel = runQ conn param (relationalQuery rel)
 
 --------------------------------------------------------------------------------
--- | Run a relation to the connection but first log the relation
+-- | Run a relation to the connection but first log the query to stdout
 runQDebug :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
           => conn -> p -> Query p a -> IO ()
 runQDebug conn param rel = do
@@ -161,3 +248,22 @@ runQ :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
 runQ conn param rel = do
   records <- runQuery conn rel param
   mapM_ print records
+
+--------------------------------------------------------------------------------
+-- | Run a relation to the connection but first log the query to stdout
+-- | Then print the records with some provided print function
+runQDebugPrint :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
+               => conn -> p -> Query p a -> (a -> IO ()) -> IO ()
+runQDebugPrint conn param rel print' = do
+  putStrLn $ "sql debug: " ++ show rel
+  records <- runQuery conn rel param
+  mapM_ print' records
+
+--------------------------------------------------------------------------------
+-- | Run a relation to the connection with some provided print function
+runQPrint :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
+          => conn -> p -> Query p a -> (a -> IO ()) ->IO ()
+runQPrint conn param rel print' = do
+  records <- runQuery conn rel param
+  mapM_ print' records
+

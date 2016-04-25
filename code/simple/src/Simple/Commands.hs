@@ -148,7 +148,7 @@ dueDateFromFlags []           = error "Must specify due date!"
 dueDateFromFlags (DueBy s:_) = parseDate (B.pack $ show (fromGregorian year month day))
                                  where
                                    ymd   = B.split '-' (B.pack s)
-                                   year  = read (B.unpack (ymd !! 0)) :: Integer
+                                   year  = read (B.unpack (head ymd)) :: Integer
                                    month = read (B.unpack (ymd !! 1)) :: Int
                                    day   = read (B.unpack (ymd !! 2)) :: Int
 dueDateFromFlags (_:xs)       = dueDateFromFlags xs
