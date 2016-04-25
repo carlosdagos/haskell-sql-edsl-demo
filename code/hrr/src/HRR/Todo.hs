@@ -11,6 +11,8 @@ module HRR.Todo
     , prio'
     , todo
     , todosByPriority
+    , todosByPriorityAndBeforeDate
+    , todoIdAndTitleByPriorityAndBeforeDate
     , tableOfTodo
     , insertTodo
     , insertQueryTodo
@@ -46,6 +48,17 @@ todosByPriority = relation $ do
     t <- query todo
     desc $ t ! prio'
     return t
+
+todosByPriorityAndBeforeDate :: Relation Day Todo
+todosByPriorityAndBeforeDate = relation' . placeholder $ \ph -> do
+    t <- query todosByPriority
+    wheres $ t ! dueDate' .<=. ph
+    return t
+
+todoIdAndTitleByPriorityAndBeforeDate :: Relation Day (Int32, String)
+todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
+    (ph, t) <- query' todosByPriorityAndBeforeDate
+    return (ph, t ! todoId' >< t ! title')
 
 instance Eq Todo where
     t1 == t2 = todoId t1 == todoId t2

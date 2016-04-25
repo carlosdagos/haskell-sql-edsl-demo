@@ -580,6 +580,55 @@ title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
 
 #### Simple queries
 
+```haskell
+import qualified HRR.Todo as T
+
+todosByPriority :: Relation () T.Todo
+todosByPriority = relation $ do
+    t <- query T.todo
+    desc $ t ! T.prio'
+    return t
+
+import qualified H.Hashtag as H
+
+findHashtagsForTodo :: Relation Int32 H.Hashtag
+findHashtagsForTodo = relation' . placeholder $ \ph -> do
+    hashtags <- query H.hashtag
+    wheres $ hashtags ! H.todoId' .=. ph
+    return hashtags
+```
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Simple queries
+
+```haskell
+import Data.Time.Calendar      (Day)
+import qualified HRR.Todo as T
+
+todosByPriorityAndBeforeDate :: Relation Day T.Todo
+todosByPriorityAndBeforeDate = relation' . placeholder $ \ph -> do
+    t <- query todosByPriority
+    wheres $ t ! T.dueDate' .<=. ph
+    return t
+
+todoIdAndTitleByPriorityAndBeforeDate :: Relation Day (Int32, String)
+todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
+    (ph, t) <- query' todosByPriorityAndBeforeDate
+    return (ph, t ! todoId' >< t ! title')
+```
+
+We're now not only repeating less code. We're also rationalizing about our
+queries by the types that we're binding and the types we're returning.
+
+Fun fact: My naming skills gave me a hard time in college.
+
+---
+
+## Haskell Relational Record (HRR)
+
 #### Blocks of composability
 
 #### Composing queries

@@ -9,6 +9,9 @@ module HRR.Commands
     , Command(..)
      -- * Flags
     , Flag(..)
+     -- * Export to avoid 'unused' warnings
+    , insertTodo
+    , runAddCommand
     ) where
 
 import           Database.Relational.Query
@@ -85,8 +88,8 @@ insertTodo = derivedInsertQuery T.piTodo' . relation' $
 
 runAddCommand :: (IConnection conn) => conn -> String -> [Flag] -> IO ()
 runAddCommand conn title flags = do
-    let prio       = prioFromFlags flags
-    let dueDate    = dueDateFromFlags flags
+    let prio   = prioFromFlags flags
+    let dueDate = dueDateFromFlags flags
 
     -- I can build now my partial object
     let piToInsert = T.PiTodo { T.piTodoTitle = title
