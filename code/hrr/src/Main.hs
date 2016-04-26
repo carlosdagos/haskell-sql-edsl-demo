@@ -62,6 +62,7 @@ parse args = case args of
                ("add":x:argv)   -> makeCommand (Add x) argv
                ("complete":x:_) -> makeCommand (Complete (read x :: Int32)) []
                ("list":argv)    -> makeCommand List argv
+               ("report":_)     -> makeCommand Reports []
                _                -> Left "Unrecognized command or wrong \
                                         \number of arguments."
 

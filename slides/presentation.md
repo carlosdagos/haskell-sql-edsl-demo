@@ -537,19 +537,19 @@ title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
 ## Haskell Relational Record (HRR)
 
 .pull-left[
-#### Important Operators
-
-- `!`
-- `><`
-- `|$|`, `|*|`
-- `.<.`, `.>.`, `.>=.`, `.<=.`, `.=.`
-
 #### Important data structures
 
 - `Pi p a`
 - `Relation p a`
 - `Projection c a`
 - `Query`, `InsertQuery`, `Update`...
+
+#### Important Operators
+
+- `!`
+- `><`
+- `|$|`, `|*|`
+- `.<.`, `.>.`, `.>=.`, `.<=.`, `.=.`
 ]
 
 .pull-right[

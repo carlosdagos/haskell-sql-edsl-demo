@@ -16,11 +16,9 @@ module HRR.Commands
 
 import           Database.Relational.Query
 import           Database.HDBC
-                 ( IConnection, SqlValue, commit )
+                 ( IConnection, commit )
 import           Database.HDBC.Record
-                 ( runQuery, runInsert, runInsertQuery, runInsert, runDelete )
-import           Database.Record
-                 ( ToSql, FromSql )
+                 ( runQuery, runInsertQuery, runInsert, runDelete )
 import           Data.Time.Calendar
                  ( Day, fromGregorian )
 import           Data.Int
@@ -29,8 +27,10 @@ import           Data.List
                  ( intercalate )
 import qualified Data.ByteString.Char8 as B
                  ( unpack, pack, split )
+import           HRR.ConnectionHelpers
 import qualified HRR.Todo                   as T
 import qualified HRR.Hashtag                as H
+import qualified HRR.Reports                as R
 
 --------------------------------------------------------------------------------
 -- | Commands available for the application
@@ -39,6 +39,7 @@ data Command
     | Find Int32            -- find
     | Add String            -- add
     | Complete Int32        -- complete
+    | Reports               -- reports
     deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -64,7 +65,15 @@ runAndPrintCommand conn cmd flags
       Find x     -> runFindCommand conn x flags
       Add title  -> runAlternativeAddCommand conn title flags
       Complete x -> runCompleteCommand conn x
+      Reports    -> runReportsCommand conn
 
+--------------------------------------------------------------------------------
+-- | Reports command
+runReportsCommand :: (IConnection conn) => conn -> IO ()
+runReportsCommand = R.runReports
+
+--------------------------------------------------------------------------------
+-- | List command
 runListCommand :: (IConnection conn) => conn -> [Flag] -> IO ()
 runListCommand conn flags = do
     let q = relationalQuery $ if OrderByPriority `notElem` flags then
@@ -220,51 +229,3 @@ prioFromFlags :: [Flag] -> Maybe Int32
 prioFromFlags []                = Nothing
 prioFromFlags (SetPriority p:_) = Just (read p :: Int32)
 prioFromFlags (_:xs)            = prioFromFlags xs
-
---------------------------------------------------------------------------------
--- | Run a relation to the connection but first log the query to stdout
-runDebug :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
-         => conn -> p -> Relation p a -> IO ()
-runDebug conn param rel = runQDebug conn param (relationalQuery rel)
-
---------------------------------------------------------------------------------
--- | Run a relation to the connection
-run :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
-    => conn -> p -> Relation p a -> IO ()
-run conn param rel = runQ conn param (relationalQuery rel)
-
---------------------------------------------------------------------------------
--- | Run a relation to the connection but first log the query to stdout
-runQDebug :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
-          => conn -> p -> Query p a -> IO ()
-runQDebug conn param rel = do
-  putStrLn $ "sql debug: " ++ show rel
-  records <- runQuery conn rel param
-  mapM_ print records
-
---------------------------------------------------------------------------------
--- | Run a relation to the connection
-runQ :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
-    => conn -> p -> Query p a -> IO ()
-runQ conn param rel = do
-  records <- runQuery conn rel param
-  mapM_ print records
-
---------------------------------------------------------------------------------
--- | Run a relation to the connection but first log the query to stdout
--- | Then print the records with some provided print function
-runQDebugPrint :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
-               => conn -> p -> Query p a -> (a -> IO ()) -> IO ()
-runQDebugPrint conn param rel print' = do
-  putStrLn $ "sql debug: " ++ show rel
-  records <- runQuery conn rel param
-  mapM_ print' records
-
---------------------------------------------------------------------------------
--- | Run a relation to the connection with some provided print function
-runQPrint :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
-          => conn -> p -> Query p a -> (a -> IO ()) ->IO ()
-runQPrint conn param rel print' = do
-  records <- runQuery conn rel param
-  mapM_ print' records
-
