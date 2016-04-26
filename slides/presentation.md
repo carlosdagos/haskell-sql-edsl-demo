@@ -486,7 +486,7 @@ $(defineTable "public" "todo" [''Show])
 ```haskell
 
 ghci> :t Todo
-Todo :: Int32         -- ^ The Todo id   | todoId  :: Todo -> Int32
+Todo :: Int32         -- ^ The Todo id   | id      :: Todo -> Int32
      -> Day           -- ^ The date      | dueDate :: Todo -> Day
      -> String        -- ^ The title     | title   :: Todo -> String
      -> Maybe Int32   -- ^ The priority  | prio    :: Todo -> Maybe Int32
@@ -496,7 +496,7 @@ ghci> :t todo
 todo :: Relation () Todo
 
 ghci> show todo
-"SELECT todo_id, due_date, title, prio FROM PUBLIC.todo"
+"SELECT id, due_date, title, prio FROM PUBLIC.todo"
 
 ghci> :t selectTodo
 selectTodo :: Query Int32 Todo
@@ -516,8 +516,8 @@ About those `Pi`s
 
 ```haskell
 
-ghci> :t todoId'
-todoId' :: Database.Relational.Query.Pi.Unsafe.Pi Todo Int32
+ghci> :t id'
+id' :: Database.Relational.Query.Pi.Unsafe.Pi Todo Int32
 
 ghci> :t dueDate'
 dueDate'
@@ -593,7 +593,7 @@ todosByPriority = relation $ do
 Produces
 
 ```sql
-SELECT ALL T0.todo_id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
+SELECT ALL T0.id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
 FROM PUBLIC.todo T0
 ORDER BY T0.prio DESC
 ```
@@ -610,7 +610,7 @@ import qualified H.Hashtag as H
 hashtagsForTodo :: Relation Int32 H.Hashtag
 hashtagsForTodo = relation' . placeholder $ \ph -> do
     hashtags <- query H.hashtag
-    wheres $ hashtags ! H.todoId' .=. ph
+    wheres $ hashtags ! H.id' .=. ph
     return hashtags
 ```
 
@@ -644,7 +644,7 @@ Produces
 ```sql
 SELECT ALL T1.f0 AS f0, T1.f1 AS f1, T1.f2 AS f2, T1.f3 AS f3
 FROM (SELECT ALL
-      T0.todo_id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
+      T0.id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
       FROM PUBLIC.todo T0 ORDER BY T0.prio DESC) T1
       WHERE (T1.f1 <= ?)
 ```
@@ -662,7 +662,7 @@ import qualified HRR.Todo as T
 todoIdAndTitleByPriorityAndBeforeDate :: Relation Day (Int32, String)
 todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
     (ph, t) <- query' todosByPriorityAndBeforeDate
-    return (ph, t ! todoId' >< t ! title')
+    return (ph, t ! T.id' >< t ! T.title')
 ```
 
 Produces
@@ -672,7 +672,7 @@ SELECT ALL T2.f0 AS f0, T2.f2 AS f1
 FROM (SELECT ALL
       T1.f0 AS f0, T1.f1 AS f1, T1.f2 AS f2, T1.f3 AS f3
       FROM (SELECT ALL
-            T0.todo_id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
+            T0.id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
             FROM PUBLIC.todo T0 ORDER BY T0.prio DESC) T1
             WHERE (T1.f1 <= ?)) T2
 ```
