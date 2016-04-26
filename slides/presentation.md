@@ -610,7 +610,7 @@ import qualified H.Hashtag as H
 hashtagsForTodo :: Relation Int32 H.Hashtag
 hashtagsForTodo = relation' . placeholder $ \ph -> do
     hashtags <- query H.hashtag
-    wheres $ hashtags ! H.id' .=. ph
+    wheres $ hashtags ! H.todoId' .=. ph
     return hashtags
 ```
 
