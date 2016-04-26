@@ -63,9 +63,9 @@ runFindCommand c tid _ = do
 
     if isJust maybeTodo then
         let todo = fromJust maybeTodo in
-        putStrLn $ unlines [ "Todo: "     ++ show tid
-                           , "Title: "    ++ T.getTitle todo
-                           , "Due by: "   ++ show (T.getDueDate todo)
+        putStrLn $ unlines [ "Todo:     " ++ show tid
+                           , "Title:    " ++ T.getTitle todo
+                           , "Due by:   " ++ show (T.getDueDate todo)
                            , "Priority: " ++ priority (T.getPrio todo)
                            , "Hashtags: " ++ showHashtags hashtags
                            ]

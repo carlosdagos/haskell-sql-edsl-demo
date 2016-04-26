@@ -151,11 +151,10 @@ printTodo conn t = do
 
     putStrLn $ intercalate "\n"
         [
-          "id: "       ++ show (T.id t)
-        , "title: "    ++ T.title t
-        , "due by : "  ++ show (T.dueDate t)
-        , "priority: " ++ maybe "-" show (T.prio t)
-        , "hashtags: " ++ intercalate ", " (map H.hashtagStr hashtags)
+          "Title:    " ++ T.title t
+        , "Due by:   " ++ show (T.dueDate t)
+        , "Priority: " ++ maybe "-" show (T.prio t)
+        , "Hashtags: " ++ intercalate ", " (map H.hashtagStr hashtags)
         ]
 
 printTodoList :: (IConnection conn) => conn -> [Flag] -> T.Todo -> IO ()
@@ -170,19 +169,19 @@ printTodoList conn flags t = do
     if withH then
         putStrLn $ unwords
             [
-              "id: "       ++ show (T.id t)
-            , "title: "    ++ T.title t
-            , "due by : "  ++ show (T.dueDate t)
-            , "priority: " ++ maybe "-" show (T.prio t)
-            , "hashtags: " ++ intercalate ", " (map H.hashtagStr hashtags)
+              show (T.id t) ++ "."
+            , T.title t
+            , "(due by: "  ++ show (T.dueDate t) ++ ")"
+            , "(priority: " ++ maybe "-" show (T.prio t) ++ ")"
+            , intercalate ", " (map H.hashtagStr hashtags)
             ]
     else
          putStrLn $ unwords
             [
-              "id: "       ++ show (T.id t)
-            , "title: "    ++ T.title t
-            , "due by : "  ++ show (T.dueDate t)
-            , "priority: " ++ maybe "-" show (T.prio t)
+              show (T.id t) ++ "."
+            , T.title t
+            , "(due by: "  ++ show (T.dueDate t) ++ ")"
+            , "(priority: " ++ maybe "-" show (T.prio t) ++ ")"
             ]
 
 findHashtagsForTodo :: Relation Int32 H.Hashtag

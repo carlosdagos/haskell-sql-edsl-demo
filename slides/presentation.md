@@ -134,7 +134,6 @@ List TODOs that are due on a certain date, and belong to a certain hashtag.
 
 ```bash
 $ todos list --due-by '2015-05-20' --order-by-priority --hashtag "#responsible"
-2. Call parents (due by: 2015-05-20) (priority: 7) #good-son
 1. Buy food     (due by: 2015-05-20) (priority: 5) #independence #responsible
 ```
 
