@@ -567,12 +567,12 @@ title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
 
 - `MonadQuery`, a typeclass
 - `MonadAggregate`, a typeclass
+]
 
-### Important instances
+#### Important instances
 
 - `QueryJoin`, `Orderings`, `Restrictings` => `MonadQuery`
 - `Orderings`, `Restrictings` => `MonadAggregate`
-]
 
 ---
 
@@ -588,14 +588,38 @@ todosByPriority = relation $ do
     t <- query T.todo
     desc $ t ! T.prio'
     return t
+```
 
+Produces
+
+```sql
+SELECT ALL T0.todo_id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
+FROM PUBLIC.todo T0
+ORDER BY T0.prio DESC
+```
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Simple queries
+
+```haskell
 import qualified H.Hashtag as H
 
-findHashtagsForTodo :: Relation Int32 H.Hashtag
-findHashtagsForTodo = relation' . placeholder $ \ph -> do
+hashtagsForTodo :: Relation Int32 H.Hashtag
+hashtagsForTodo = relation' . placeholder $ \ph -> do
     hashtags <- query H.hashtag
     wheres $ hashtags ! H.todoId' .=. ph
     return hashtags
+```
+
+Produces
+
+```sql
+SELECT ALL T0.todo_id AS f0, T0.hashtag_str AS f1
+FROM PUBLIC.hashtag T0
+WHERE (T0.todo_id = ?)
 ```
 
 ---
@@ -613,6 +637,27 @@ todosByPriorityAndBeforeDate = relation' . placeholder $ \ph -> do
     t <- query todosByPriority
     wheres $ t ! T.dueDate' .<=. ph
     return t
+```
+
+Produces
+
+```sql
+SELECT ALL T1.f0 AS f0, T1.f1 AS f1, T1.f2 AS f2, T1.f3 AS f3
+FROM (SELECT ALL
+      T0.todo_id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
+      FROM PUBLIC.todo T0 ORDER BY T0.prio DESC) T1
+      WHERE (T1.f1 <= ?)
+```
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Simple queries
+
+```haskell
+import Data.Time.Calendar      (Day)
+import qualified HRR.Todo as T
 
 todoIdAndTitleByPriorityAndBeforeDate :: Relation Day (Int32, String)
 todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
@@ -620,10 +665,28 @@ todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
     return (ph, t ! todoId' >< t ! title')
 ```
 
+Produces
+
+```sql
+SELECT ALL T2.f0 AS f0, T2.f2 AS f1
+FROM (SELECT ALL
+      T1.f0 AS f0, T1.f1 AS f1, T1.f2 AS f2, T1.f3 AS f3
+      FROM (SELECT ALL
+            T0.todo_id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
+            FROM PUBLIC.todo T0 ORDER BY T0.prio DESC) T1
+            WHERE (T1.f1 <= ?)) T2
+```
+
+Fun fact: In college I had a hard time with my naming skills
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Simple queries
+
 We're now not only repeating less code. We're also rationalizing about our
 queries by the types that we're binding and the types we're returning.
-
-Fun fact: My naming skills gave me a hard time in college.
 
 ---
 
@@ -632,7 +695,6 @@ Fun fact: My naming skills gave me a hard time in college.
 #### Blocks of composability
 
 #### Composing queries
-
 
 ---
 

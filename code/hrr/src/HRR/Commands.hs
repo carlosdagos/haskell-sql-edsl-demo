@@ -131,21 +131,18 @@ runAlternativeAddCommand conn title flags = do
 runFindCommand :: (IConnection conn) => conn -> Int32 -> [Flag] -> IO ()
 runFindCommand conn x flags =
     if Debug `elem` flags then
-        runQDebugPrint conn x T.selectTodo (printTodo conn flags)
+        runQDebugPrint conn x T.selectTodo (printTodo conn)
     else
-        runQPrint conn x T.selectTodo (printTodo conn flags)
+        runQPrint conn x T.selectTodo (printTodo conn)
 
-printTodo :: (IConnection conn) => conn -> [Flag] -> T.Todo -> IO ()
-printTodo conn flags t = do
-    hashtags <- if WithHashtags `elem` flags then
-                    let tid = T.todoId t in
-                    runQuery conn (relationalQuery findHashtagsForTodo) tid
-                else
-                    return []
+printTodo :: (IConnection conn) => conn -> T.Todo -> IO ()
+printTodo conn t = do
+    hashtags <- let tid = T.id t in
+                runQuery conn (relationalQuery findHashtagsForTodo) tid
 
     putStrLn $ intercalate "\n"
         [
-          "id: " ++ show (T.todoId t)
+          "id: " ++ show (T.id t)
         , "title: " ++ T.title t
         , "due by : " ++ show (T.dueDate t)
         , "priority: " ++ maybe "-" show (T.prio t)
@@ -156,7 +153,7 @@ printTodoList :: (IConnection conn) => conn -> [Flag] -> T.Todo -> IO ()
 printTodoList conn flags t = do
     let withH = WithHashtags `elem` flags
     hashtags <- if withH then
-                    let tid = T.todoId t in
+                    let tid = T.id t in
                     runQuery conn (relationalQuery findHashtagsForTodo) tid
                 else
                     return []
@@ -164,7 +161,7 @@ printTodoList conn flags t = do
     if withH then
         putStrLn $ unwords
             [
-              "id: " ++ show (T.todoId t)
+              "id: " ++ show (T.id t)
             , "title: " ++ T.title t
             , "due by : " ++ show (T.dueDate t)
             , "priority: " ++ maybe "-" show (T.prio t)
@@ -173,7 +170,7 @@ printTodoList conn flags t = do
     else
          putStrLn $ unwords
             [
-              "id: " ++ show (T.todoId t)
+              "id: " ++ show (T.id t)
             , "title: " ++ T.title t
             , "due by : " ++ show (T.dueDate t)
             , "priority: " ++ maybe "-" show (T.prio t)
@@ -190,7 +187,7 @@ findHashtagsForTodo = relation' . placeholder $ \ph -> do
 deleteTodo :: Delete Int32
 deleteTodo = derivedDelete $ \projection ->
                 fst <$> placeholder
-                    (\ph -> wheres $ projection ! T.todoId' .=. ph)
+                    (\ph -> wheres $ projection ! T.id' .=. ph)
 
 runCompleteCommand :: (IConnection conn) => conn -> Int32 -> IO ()
 runCompleteCommand conn x = do

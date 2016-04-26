@@ -5,7 +5,7 @@ module HRR.Todo
       Todo(..)
     , PiTodo(..)
     , piTodo'
-    , todoId'
+    , id'
     , dueDate'
     , title'
     , prio'
@@ -30,7 +30,8 @@ import Data.Time.Calendar
        ( Day )
 import Database.HDBC.Query.TH
        ( makeRecordPersistableDefault )
-import Database.Relational.Query
+import Prelude                   hiding (id)
+import Database.Relational.Query hiding (id')
 
 
 -- | Keep in mind this will turn all the fields in the table into a
@@ -58,10 +59,10 @@ todosByPriorityAndBeforeDate = relation' . placeholder $ \ph -> do
 todoIdAndTitleByPriorityAndBeforeDate :: Relation Day (Int32, String)
 todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
     (ph, t) <- query' todosByPriorityAndBeforeDate
-    return (ph, t ! todoId' >< t ! title')
+    return (ph, t ! id' >< t ! title')
 
 instance Eq Todo where
-    t1 == t2 = todoId t1 == todoId t2
+    t1 == t2 = id t1 == id t2
 
 data PiTodo = PiTodo { piTodoTitle :: String
                      , piTodoDate :: Day
