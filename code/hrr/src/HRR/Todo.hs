@@ -65,13 +65,13 @@ instance Eq Todo where
     t1 == t2 = id t1 == id t2
 
 data PiTodo = PiTodo { piTodoTitle :: String
-                     , piTodoDate :: Day
-                     , piTodoPrio :: Maybe Int32
+                     , piTodoDate  :: Day
+                     , piTodoPrio  :: Maybe Int32
                      }
 
-$(makeRecordPersistableDefault ''PiTodo)
+$(makeRecordPersistableDefault ''PiTodo) -- Creates the `Pi` fields
 
--- Constructor method for partial insertions
+-- Creates a "bindable" placeholder for insertions
 piTodo' :: Pi Todo PiTodo
 piTodo' = PiTodo |$| title'
                  |*| dueDate'

@@ -6,6 +6,7 @@ module HRR.Reports
     , todosWithoutHashtags
     , todosMultipleHashtags
     , hashtagsWithMultipleTodos
+    , mostPopularHashtags
     , countLateTodos
     , countFutureTodos
    ) where
@@ -25,6 +26,9 @@ import qualified HRR.ConnectionHelpers      as C
 
 runReports :: (IConnection conn) => conn -> IO ()
 runReports conn = do
+    putStrLn "Most popular hashtags:"
+    C.run conn () mostPopularHashtags
+
     putStrLn "Todos without hashtags:"
     C.run conn () todosWithoutHashtags
 
@@ -42,13 +46,13 @@ runReports conn = do
     putStrLn "Hashtags with multiple todos:"
     C.run conn () hashtagsWithMultipleTodos
 
-todosWithoutHashtags :: Relation () (Int32, String)
+todosWithoutHashtags :: Relation () T.Todo
 todosWithoutHashtags = relation $ do
     t <- query T.todo
     h <- queryMaybe H.hashtag
     on $ just (t ! T.id') .=. h ?! H.todoId'
     wheres $ isNothing (h ?! H.todoId')
-    return $ t ! T.id' >< t ! T.title'
+    return t
 
 -- What I want
 --
@@ -84,4 +88,19 @@ countFutureTodos = aggregateRelation' . placeholder $ \ph -> do
     wheres $ t ! T.dueDate' .>. ph
     return $ count (t ! T.id')
 
+--
+-- What I want
+--
+-- select hashtag_str, count(*)
+-- from hashtag
+-- group by hashtag_str
+-- having count(hashtag_str) > 1
+-- order by count(hashtag_str) desc;
+--
+--mostPopularHashtags :: Relation () String
+mostPopularHashtags = do
+    h <- query H.hashtag
+    g <- groupBy $ h ! H.hashtagStr'
+    having $ count (h ! H.hashtagStr') .>. value 1
+    return g
 

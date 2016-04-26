@@ -6,7 +6,7 @@ class: center, middle
 #### Zürich, May 19th 2016
 .center[<img src="images/haskell.png" alt="" width="100" />]
 <br/>
-##### By [Carlos D.](https://github.com/charlydagos)
+##### [Carlos D.](https://github.com/charlydagos)
 
 ---
 
@@ -298,6 +298,68 @@ instance ToRow Hashtag where
 #### Sample methods
 
 ```haskell
+-- file simple/src/Simple/Todo.hs
+addTodo :: Connection -> Todo -> IO (Only Int)
+addTodo conn t
+    = head <$> query conn q t
+      where
+        q = [sql| insert into todos (title, due_date, prio) values (?, ?, ?)
+                  returning id |]
+
+-- file simple/src/Simple/Commands.hs
+runAddCommand :: Connection -> String -> [Flag] -> IO ()
+runAddCommand c desc flags = do
+    let priority = prioFromFlags flags
+    let dueDate  = either error id (dueDateFromFlags flags)
+    let todo = if isJust priority then
+                  T.Todo { T.getId      = Nothing, T.getTitle = desc
+                         , T.getDueDate = dueDate, T.getPrio  = priority }
+               else
+                  T.Todo { T.getId      = Nothing, T.getTitle = desc
+                         , T.getDueDate = dueDate, T.getPrio  = Nothing }
+
+    Only tid <- T.addTodo c todo
+    putStrLn (unwords ["Added todo", show tid])
+```
+
+---
+
+## Current state of things
+
+#### Sample methods
+
+```haskell
+-- file simple/src/Simple/Todo.hs
+deleteTodo :: Connection -> Int -> IO Int64
+deleteTodo conn tid = execute conn q (Only tid)
+                      where
+                        q = [sql| delete from todos where id = ? |]
+
+-- file simple/src/Simple/Commands.hs
+runCompleteCommand :: Connection -> Int -> IO ()
+runCompleteCommand c tid = do
+    maybeTodo <- T.findTodo c tid
+    affected  <- T.deleteTodo c tid
+
+    if isJust maybeTodo then
+        hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
+    else if affected > 0 then
+        putStrLn $ unwords
+            [ "👍 Completed"
+            , T.getTitle (fromJust maybeTodo)
+            ]
+    else
+        hPutStrLn stderr "Error: Something went wrong!"
+     >> exitWith (ExitFailure 1)
+```
+
+---
+
+## Current state of things
+
+#### Sample methods
+
+```haskell
 -- file src/Simple/Todo.hs
 allTodos :: Connection -> IO [Todo]
 allTodos conn = query_ conn q
@@ -545,7 +607,7 @@ title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
 
 #### Important Operators
 
-- `!`, '?!'
+- `!`, `?!`
 - `><`
 - `|$|`, `|*|`
 - `.<.`, `.>.`, `.>=.`, `.<=.`, `.=.`
@@ -554,24 +616,153 @@ title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
 .pull-right[
 #### Important Functions
 
-- `just`
+- `query`
 - `wheres`
 - `on`
-- `groupBy`
 - `in`
 - `or`
 - `asc`, `desc`
+- `groupBy`
+- `having`
 
 #### Important typeclasses
 
-- `MonadQuery`, a typeclass
-- `MonadAggregate`, a typeclass
+- `MonadQuery`, `MonadAggregate`, `MonadRestrict`...
 ]
 
 #### Important instances
 
 - `QueryJoin`, `Orderings`, `Restrictings` => `MonadQuery`
 - `Orderings`, `Restrictings` => `MonadAggregate`
+
+Accumulates various context in a State Monad context (i.e.: Uses `StateT`
+Monad.)
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Sample methods
+
+```haskell
+-- file hrr/src/HRR/Commands.hs
+runFindCommand :: (IConnection conn) => conn -> Int32 -> [Flag] -> IO ()
+runFindCommand conn x flags =
+        runQPrint conn x T.selectTodo (printTodo conn)
+```
+
+Adding and deleting can get a bit more complex...
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Sample methods
+
+Problem: My new `Todo`'s `id` is an `Int32`, not a `Maybe Int` like we had
+before. And `insertTodo` doesn't care that my `id` is `serial`.
+
+Solution: Create a "partial" `Todo` and my own `insert` for it.
+
+```haskell
+-- file hrr/src/HRR/Todo.hs
+data PiTodo = PiTodo { piTodoTitle :: String
+                     , piTodoDate  :: Day
+                     , piTodoPrio  :: Maybe Int32
+                     }
+
+$(makeRecordPersistableDefault ''PiTodo) -- Create the `Pi`s
+
+-- Creates a "bindable" placeholder for insertions
+piTodo' :: Pi Todo PiTodo
+piTodo' = PiTodo |$| title'
+                 |*| dueDate'
+                 |*| prio'
+```
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Sample methods
+
+```haskell
+-- file hrr/src/HRR/Commands.hs
+insertTodo :: InsertQuery T.PiTodo -- An insert query to be bound by a partial
+insertTodo = derivedInsertQuery T.piTodo' . relation' $
+    placeholder $ \ph ->
+        return $ T.PiTodo |$| ph ! T.piTodoTitle'
+                          |*| ph ! T.piTodoDate'
+                          |*| ph ! T.piTodoPrio'
+
+runAddCommand :: (IConnection conn) => conn -> String -> [Flag] -> IO ()
+runAddCommand conn title flags = do
+    let prio   = prioFromFlags flags
+    let dueDate = dueDateFromFlags flags
+
+    -- I can build now my partial object
+    let piToInsert = T.PiTodo { T.piTodoTitle = title
+                              , T.piTodoDate  = dueDate
+                              , T.piTodoPrio  = prio
+                              }
+
+    runInsertQuery conn insertTodo piToInsert
+```
+
+This is arguably a bit cumbersome to do...
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Sample methods
+
+Alternative...
+
+```haskell
+-- file hrr/src/HRR/Commands.hs
+insertTodoAlt :: Insert ((String, Day), Maybe Int32)
+insertTodoAlt = derivedInsertValue $ do -- uses "Assignings" Monad
+    (phTitle, ())   <- placeholder (\ph -> T.title'   <-# ph)
+    (phDueDate, ()) <- placeholder (\ph -> T.dueDate' <-# ph)
+    (phPrio, ())    <- placeholder (\ph -> T.prio'    <-# ph)
+    return (phTitle >< phDueDate >< phPrio)
+
+runAlternativeAddCommand :: (IConnection conn)
+                         => conn -> String -> [Flag] -> IO ()
+runAlternativeAddCommand conn title flags = do
+    let dueDate  = dueDateFromFlags flags
+    let priority = prioFromFlags flags
+    runInsert conn insertTodoAlt ((title, dueDate), priority)
+```
+
+A bit easier, but less type-safe
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Sample methods
+
+```haskell
+--- file hrr/src/HRR/Commands.hs
+deleteTodo :: Delete Int32
+deleteTodo = derivedDelete $ \projection ->
+                fst <$> placeholder
+                    (\ph -> wheres $ projection ! T.id' .=. ph)
+
+runCompleteCommand :: (IConnection conn) => conn -> Int32 -> IO ()
+runCompleteCommand conn x = do
+    todos <- runQuery conn T.selectTodo x
+    i     <- runDelete conn deleteTodo x
+
+    if i > 0 then
+        putStrLn ("Compeleted todo " ++ T.title (head todos))
+    else
+        putStrLn ("Could not complete todo " ++ show x)
+
+    commit conn
+```
 
 ---
 
