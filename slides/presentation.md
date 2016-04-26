@@ -545,7 +545,7 @@ title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
 
 #### Important Operators
 
-- `!`
+- `!`, '?!'
 - `><`
 - `|$|`, `|*|`
 - `.<.`, `.>.`, `.>=.`, `.<=.`, `.=.`
