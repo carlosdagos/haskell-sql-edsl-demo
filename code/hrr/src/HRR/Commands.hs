@@ -142,9 +142,9 @@ printTodo conn t = do
 
     putStrLn $ intercalate "\n"
         [
-          "id: " ++ show (T.id t)
-        , "title: " ++ T.title t
-        , "due by : " ++ show (T.dueDate t)
+          "id: "       ++ show (T.id t)
+        , "title: "    ++ T.title t
+        , "due by : "  ++ show (T.dueDate t)
         , "priority: " ++ maybe "-" show (T.prio t)
         , "hashtags: " ++ intercalate ", " (map H.hashtagStr hashtags)
         ]
@@ -161,18 +161,18 @@ printTodoList conn flags t = do
     if withH then
         putStrLn $ unwords
             [
-              "id: " ++ show (T.id t)
-            , "title: " ++ T.title t
-            , "due by : " ++ show (T.dueDate t)
+              "id: "       ++ show (T.id t)
+            , "title: "    ++ T.title t
+            , "due by : "  ++ show (T.dueDate t)
             , "priority: " ++ maybe "-" show (T.prio t)
             , "hashtags: " ++ intercalate ", " (map H.hashtagStr hashtags)
             ]
     else
          putStrLn $ unwords
             [
-              "id: " ++ show (T.id t)
-            , "title: " ++ T.title t
-            , "due by : " ++ show (T.dueDate t)
+              "id: "       ++ show (T.id t)
+            , "title: "    ++ T.title t
+            , "due by : "  ++ show (T.dueDate t)
             , "priority: " ++ maybe "-" show (T.prio t)
             ]
 
@@ -203,6 +203,7 @@ runCompleteCommand conn x = do
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
+-- | again please specify proper format, there's no real checking :)
 dueDateFromFlags :: [Flag] -> Day
 dueDateFromFlags []          = error "Must specify due date!"
 dueDateFromFlags (DueBy s:_) = fromGregorian year month day
