@@ -487,6 +487,8 @@ getBadTodos
 
 - Developed from scratch as a response to some issues found using HaskellDB
 
+- Runs on top of [`HDBC`](https://hackage.haskell.org/package/HDBC)
+
 Cabal file
 
 ```code
@@ -1028,8 +1030,9 @@ Developed by
 - Fynder (Renzo Carbonara, Oliver Charles) - _London, UK_
 - Daniel Patterson, Jakub Ryška, Travis Staton
 
+Runs on top of [`postgresql-simple`](https://hackage.haskell.org/package/postgresql-simple)
+
 ```code
-...
 executable haskellerz-sqlgen-opaleye
   main-is:             Main.hs
   ghc-options:         -Wall -Werror
@@ -1046,6 +1049,12 @@ executable haskellerz-sqlgen-opaleye
   hs-source-dirs:      src
   default-language:    Haskell2010
 ```
+
+---
+
+## Opaleye
+
+#### My new definition for `Todo`
 
 ---
 
@@ -1075,3 +1084,4 @@ Mainly:
 - [Experience Report on HRR](http://khibino.github.io/haskell-relational-record/pdf/hrr-haskell-sympo2015-rejected.pdf)
 - [Extensive examples on HRR](https://github.com/khibino/haskell-relational-record/blob/master/relational-record-examples/src/examples.hs)
 - [Reddit thread with opinions on Opaleye and HRR - With creators' comments](https://www.reddit.com/r/haskell/comments/3fuq4s/opaleye_or_relationalrecord/)
+- [Ben Kolera from Brisbane Functional Programming Group on Opaleye](https://www.youtube.com/watch?v=A0oVn-GXOok)
