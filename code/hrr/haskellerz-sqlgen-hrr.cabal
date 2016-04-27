@@ -14,7 +14,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 executable haskellerz-sqlgen-hrr
-  ghc-options:         -Wall -fsimpl-tick-factor=500
+  ghc-options:         -Wall -Werror -fsimpl-tick-factor=500
   main-is:             Main.hs
   build-depends:       base                  == 4.8.*
                      , relational-record     == 0.1.3.*

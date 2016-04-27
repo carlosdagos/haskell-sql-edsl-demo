@@ -487,9 +487,25 @@ getBadTodos
 
 - Developed from scratch as a response to some issues found using HaskellDB
 
-- Mainly:
-   - Semantics of aggregate queries
-   - Name conflicts when composing queries
+Cabal file
+
+```code
+...
+executable haskellerz-sqlgen-hrr
+  ghc-options:         -Wall -Werror -fsimpl-tick-factor=500
+  main-is:             Main.hs
+  build-depends:       base                  == 4.8.*
+                     , relational-record     == 0.1.3.*
+                     , relational-query      >= 0.3
+                     , relational-query-HDBC == 0.6.*
+                     , persistable-record    == 0.4.0.*
+                     , HDBC                  == 2.4.0.1
+                     , HDBC-postgresql       == 2.3.2.*
+                     , HDBC-session          == 0.1.0.*
+                     , template-haskell      == 2.10.*
+                     , time                  == 1.5.*
+                     , bytestring            == 0.10.6.*
+```
 
 ---
 
@@ -1004,6 +1020,32 @@ Monad.)
 ---
 
 ## Opaleye
+
+Developed by
+
+- Silk (Erik Hesselink, Adam Bergmark) - _Amsterdam, NL_
+- Karamaan (Christopher Lewis) - _NY, USA_
+- Fynder (Renzo Carbonara, Oliver Charles) - _London, UK_
+- Daniel Patterson, Jakub Ryška, Travis Staton
+
+```code
+...
+executable haskellerz-sqlgen-opaleye
+  main-is:             Main.hs
+  ghc-options:         -Wall -Werror
+  build-depends:       base                == 4.8.*
+                     , lens
+                     , mtl                 >= 2.2
+                     , opaleye             >= 0.4.1
+                     , opaleye-classy      >= 0.3.1
+                     , product-profunctors
+                     , semigroups
+                     , text
+                     , time
+                     , postgresql-simple
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+```
 
 ---
 
