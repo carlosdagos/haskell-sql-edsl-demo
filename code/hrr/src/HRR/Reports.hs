@@ -3,6 +3,7 @@
 module HRR.Reports
     ( -- * Exports
       runReports
+    , todosAndHashtags
     , todosWithoutHashtags
     , todosMultipleHashtags
     , hashtagsWithMultipleTodos
@@ -46,13 +47,22 @@ runReports conn = do
     putStrLn "Hashtags with multiple todos:"
     C.run conn () hashtagsWithMultipleTodos
 
-todosWithoutHashtags :: Relation () T.Todo
-todosWithoutHashtags = relation $ do
+todosAndHashtags :: Relation () (T.Todo, Maybe H.Hashtag)
+todosAndHashtags = relation $ do
     t <- query T.todo
     h <- queryMaybe H.hashtag
     on $ just (t ! T.id') .=. h ?! H.todoId'
-    wheres $ isNothing (h ?! H.todoId')
-    return t
+    return $ t >< h
+
+todosWithoutHashtags :: Relation () T.Todo
+todosWithoutHashtags = relation $ do
+    t <- query todosAndHashtags
+    wheres $ isNothing ((t ! snd') ?! H.todoId')
+    let todo = t ! fst'
+    return $ T.Todo |$| todo ! T.id'
+                    |*| todo ! T.title'
+                    |*| todo ! T.dueDate'
+                    |*| todo ! T.prio'
 
 -- What I want
 --
@@ -97,10 +107,11 @@ countFutureTodos = aggregateRelation' . placeholder $ \ph -> do
 -- having count(hashtag_str) > 1
 -- order by count(hashtag_str) desc;
 --
---mostPopularHashtags :: Relation () String
-mostPopularHashtags = do
-    h <- query H.hashtag
-    g <- groupBy $ h ! H.hashtagStr'
-    having $ count (h ! H.hashtagStr') .>. value 1
-    return g
+mostPopularHashtags :: Relation () String
+mostPopularHashtags = undefined
+--do
+--    h <- query H.hashtag
+--    g <- groupBy $ h ! H.hashtagStr'
+--    having $ count (h ! H.hashtagStr') .>. value 1
+--    return g
 

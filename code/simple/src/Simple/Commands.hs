@@ -143,15 +143,16 @@ showHashtags hs = intercalate ", " $ map H.getHashtag hs
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
+-- | I'm assumning the format is correct
 dueDateFromFlags :: [Flag] -> Either String Date
-dueDateFromFlags []           = error "Must specify due date!"
+dueDateFromFlags []          = error "Must specify due date!"
 dueDateFromFlags (DueBy s:_) = parseDate (B.pack $ show (fromGregorian year month day))
                                  where
                                    ymd   = B.split '-' (B.pack s)
                                    year  = read (B.unpack (head ymd)) :: Integer
                                    month = read (B.unpack (ymd !! 1)) :: Int
                                    day   = read (B.unpack (ymd !! 2)) :: Int
-dueDateFromFlags (_:xs)       = dueDateFromFlags xs
+dueDateFromFlags (_:xs)      = dueDateFromFlags xs
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the priority setting from the list of flags

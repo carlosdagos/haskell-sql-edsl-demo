@@ -569,6 +569,7 @@ ghci> :t insertTodo
 insertTodo :: Insert Todo
 
 ```
+
 ---
 
 ## Haskell Relational Record (HRR)
@@ -597,58 +598,24 @@ title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
 
 ## Haskell Relational Record (HRR)
 
-.pull-left[
-#### Important data structures
-
-- `Pi p a`
-- `Relation p a`
-- `Projection c a`
-- `Query`, `InsertQuery`, `Update`...
-
-#### Important Operators
-
-- `!`, `?!`
-- `><`
-- `|$|`, `|*|`
-- `.<.`, `.>.`, `.>=.`, `.<=.`, `.=.`
-]
-
-.pull-right[
-#### Important Functions
-
-- `query`
-- `wheres`
-- `on`
-- `in`
-- `or`
-- `asc`, `desc`
-- `groupBy`
-- `having`
-
-#### Important typeclasses
-
-- `MonadQuery`, `MonadAggregate`, `MonadRestrict`...
-]
-
-#### Important instances
-
-- `QueryJoin`, `Orderings`, `Restrictings` => `MonadQuery`
-- `Orderings`, `Restrictings` => `MonadAggregate`
-
-Accumulates various context in a State Monad context (i.e.: Uses `StateT`
-Monad.)
-
----
-
-## Haskell Relational Record (HRR)
-
 #### Sample methods
 
 ```haskell
 -- file hrr/src/HRR/Commands.hs
+import qualified HRR.Todo as T
+
+-- | Important part :)
 runFindCommand :: (IConnection conn) => conn -> Int32 -> [Flag] -> IO ()
 runFindCommand conn x flags =
         runQPrint conn x T.selectTodo (printTodo conn)
+
+-- | Helper functions to print out records
+printTodo :: (IConnection conn) => conn -> T.Todo -> IO ()
+printTodo = ...
+
+runQPrint :: (Show a, IConnection conn, FromSql SqlValue a, ToSql SqlValue p)
+          => conn -> p -> Query p a -> (a -> IO ()) ->IO ()
+runQPrint = ..
 ```
 
 Adding and deleting can get a bit more complex...
@@ -882,9 +849,141 @@ queries by the types that we're binding and the types we're returning.
 
 ## Haskell Relational Record (HRR)
 
-#### Blocks of composability
+#### Composing queries
+
+```haskell
+-- file hrr/src/HRR/Reports.hs
+
+-- | The product of all todos with their hashtags
+todosAndHashtags :: Relation () (T.Todo, Maybe H.Hashtag)
+todosAndHashtags = relation $ do
+    t <- query T.todo
+    h <- queryMaybe H.hashtag
+    on $ just (t ! T.id') .=. h ?! H.todoId'
+    return $ t >< h
+
+-- | Filter out the todos with hashtags and keep those only without
+todosWithoutHashtags :: Relation () T.Todo
+todosWithoutHashtags = relation $ do
+    t <- query todosAndHashtags
+    wheres $ isNothing ((t ! snd') ?! H.todoId')
+    let todo = t ! fst'
+    return $ T.Todo |$| todo ! T.id'
+                    |*| todo ! T.title'
+                    |*| todo ! T.dueDate'
+                    |*| todo ! T.prio'
+```
+---
+
+## Haskell Relational Record (HRR)
 
 #### Composing queries
+
+```haskell
+ghci> import HRR.Reports as R
+ghci> show R.todosAndHashtags
+
+SELECT ALL
+    T0.id AS f0, T0.title AS f1, T0.due_date AS f2, T0.prio AS f3,
+    T1.hashtag_str AS f4, T1.todo_id AS f5
+FROM PUBLIC.todo T0
+LEFT JOIN PUBLIC.hashtag T1
+ON (T0.id = T1.todo_id)
+
+ghci> show R.todosWithoutHashtags
+
+SELECT ALL T2.f0 AS f0, T2.f1 AS f1, T2.f2 AS f2, T2.f3 AS f3
+FROM (SELECT ALL
+          T0.id AS f0, T0.title AS f1, T0.due_date AS f2,
+          T0.prio AS f3, T1.hashtag_str AS f4, T1.todo_id AS f5
+      FROM PUBLIC.todo T0
+      LEFT JOIN PUBLIC.hashtag T1
+      ON (T0.id = T1.todo_id)) T2
+      WHERE (T2.f5 IS NULL)
+```
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Aggregation
+
+```haskell
+-- file hrr/src/HRR/Reports.hs
+countLateTodos :: Relation Day Int
+countLateTodos = aggregateRelation' . placeholder $ \ph -> do
+    t <- query T.todo
+    wheres $ t ! T.dueDate' .<=. ph
+    return $ count (t ! T.id')
+
+countFutureTodos :: Relation Day Int
+countFutureTodos = aggregateRelation' . placeholder $ \ph -> do
+    t <- query T.todo
+    wheres $ t ! T.dueDate' .>. ph
+    return $ count (t ! T.id')
+```
+
+---
+
+## Haskell Relational Record (HRR)
+
+#### Aggregation
+
+```haskell
+todosMultipleHashtags :: Relation () Int32
+todosMultipleHashtags = aggregateRelation $ do
+    t <- query T.todo
+    h <- query H.hashtag
+    on $ t ! T.id' .=. h ! H.todoId'
+    g <- groupBy $ t ! T.id'
+    having $ count (h ! H.hashtagStr') .>. value 1
+    return g
+```
+
+---
+
+## Haskell Relational Record (HRR)
+
+.pull-left[
+#### Important data structures
+
+- `Pi p a`
+- `Relation p a`
+- `Projection c a`
+- `Query`, `InsertQuery`, `Update`...
+
+#### Important Operators
+
+- `!`, `?!`
+- `><`
+- `|$|`, `|*|`
+- `.<.`, `.>.`, `.>=.`, `.<=.`, `.=.`
+]
+
+.pull-right[
+#### Important Functions
+
+- `query`
+- `wheres`
+- `on`
+- `in`
+- `or`
+- `asc`, `desc`
+- `groupBy`
+- `having`
+
+#### Important typeclasses
+
+- `MonadQuery`, `MonadAggregate`, `MonadRestrict`...
+]
+
+#### Important instances
+
+- `QueryJoin`, `Orderings`, `Restrictings` => `MonadQuery`
+- `Orderings`, `Restrictings` => `MonadAggregate`
+
+Accumulates various context in a State Monad context (i.e.: Uses `StateT`
+Monad.)
 
 ---
 
