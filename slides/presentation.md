@@ -946,6 +946,14 @@ todosMultipleHashtags = aggregateRelation $ do
     g <- groupBy $ t ! T.id'
     having $ count (h ! H.hashtagStr') .>. value 1
     return g
+
+mostPopularHashtags :: Relation () String
+mostPopularHashtags = do
+    h <- query H.hashtag
+    g <- groupBy $ h ! H.hashtagStr'
+    having $ count (h ! H.hashtagStr') .>. value 1
+    desc $ count (h ! H.hashtagStr')
+    return g
 ```
 
 ---

@@ -113,5 +113,6 @@ mostPopularHashtags = undefined
 --    h <- query H.hashtag
 --    g <- groupBy $ h ! H.hashtagStr'
 --    having $ count (h ! H.hashtagStr') .>. value 1
+--    desc $ count (h ! H.hashtagStr')
 --    return g
 
