@@ -921,6 +921,14 @@ countFutureTodos = aggregateRelation' . placeholder $ \ph -> do
     t <- query T.todo
     wheres $ t ! T.dueDate' .>. ph
     return $ count (t ! T.id')
+
+-- Produces
+--
+-- Future:                         | Late:
+-- SELECT ALL COUNT(T0.id) AS f0   | SELECT ALL COUNT(T0.id) AS f0
+-- FROM PUBLIC.todo T0             | FROM PUBLIC.todo T0
+-- WHERE (T0.due_date > ?)         | WHERE (T0.due_date <= ?)
+
 ```
 
 ---
