@@ -1,5 +1,7 @@
 module Main where
 
+import OpaleyeDemo.Utils
+import OpaleyeDemo.Todo
 
 main :: IO ()
-main = putStrLn "hey"
+main = printSql todoQuery

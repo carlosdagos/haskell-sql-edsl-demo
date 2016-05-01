@@ -242,7 +242,7 @@ of flags that I can accept.
 
 ## Current state of things
 
-#### Leon Smith's [`postgresql-simple`](http://hackage.haskell.org/package/postgresql-simple)
+#### Bryan O’Sullivan and Leon Smith's [`postgresql-simple`](http://hackage.haskell.org/package/postgresql-simple)
 
 I can design my types normally
 

@@ -15,12 +15,13 @@ cabal-version:       >=1.10
 
 executable haskellerz-sqlgen-opaleye
   main-is:             Main.hs
-  ghc-options:         -Wall -Werror
+  ghc-options:         -Wall
   build-depends:       base                == 4.8.*
                      , lens
                      , mtl                 >= 2.2
                      , opaleye             >= 0.4.1
                      , opaleye-classy      >= 0.3.1
+                     , profunctors
                      , product-profunctors
                      , semigroups
                      , text
