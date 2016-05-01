@@ -2,7 +2,7 @@ class: center, middle
 
 # Generating SQL Queries in Haskell
 
-#### Haskellerz Meetup
+#### HaskellerZ Meetup
 #### Zürich, May 19th 2016
 .center[<img src="images/haskell.png" alt="" width="100" />]
 <br/>
@@ -341,7 +341,7 @@ runCompleteCommand c tid = do
     maybeTodo <- T.findTodo c tid
     affected  <- T.deleteTodo c tid
 
-    if isJust maybeTodo then
+    if isNothing maybeTodo then
         hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
     else if affected > 0 then
         putStrLn $ unwords
@@ -441,13 +441,13 @@ as the requirements change.
 - `field` functions provide a convenient row parser, however the result is not
 very semantically-meaningful.
 
-- I could write an query in a quasiquote and not know that anything is wrong
+- I could write a query in a quasiquote and not know that anything is wrong
 until I run it.
 
 - I have no guarantee that I'm typing a type-safe query (i.e. The `getDate`
 from `Todo` could be a `String`, and my program would compile, but it would
 not crash until I run it, since the field in the table is defined as a `date`.
-This is also a problem when refactoring my database.
+This is also a problem when refactoring my database).
 
 ---
 
@@ -759,7 +759,7 @@ runCompleteCommand conn x = do
 import qualified HRR.Todo as T
 
 todosByPriority :: Relation () T.Todo
-todosByPriority = relation $ do
+todosByPriority = relation $ do -- QuerySimple Monad
     t <- query T.todo
     desc $ t ! T.prio'
     return t
@@ -929,7 +929,7 @@ FROM (SELECT ALL
 ```haskell
 -- file hrr/src/HRR/Reports.hs
 countLateTodos :: Relation Day Int
-countLateTodos = aggregateRelation' . placeholder $ \ph -> do
+countLateTodos = aggregateRelation' . placeholder $ \ph -> do -- QueryAggregate
     t <- query T.todo
     wheres $ t ! T.dueDate' .<=. ph
     return $ count (t ! T.id')

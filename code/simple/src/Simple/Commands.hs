@@ -12,7 +12,7 @@ module Simple.Commands
 import           System.IO
 import           System.Exit
 import           Data.Maybe
-                 ( isJust, fromJust )
+                 ( isNothing, isJust, fromJust )
 import           Data.Time.Calendar
                  ( fromGregorian )
 import           Data.List
@@ -101,7 +101,7 @@ runCompleteCommand c tid = do
     hashtags  <- H.allHashtagsForTodo c tid
     affected  <- T.deleteTodo c tid
 
-    if isJust maybeTodo then
+    if isNothing maybeTodo then
         hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
     else if affected > 0 then
         putStrLn $ unwords
