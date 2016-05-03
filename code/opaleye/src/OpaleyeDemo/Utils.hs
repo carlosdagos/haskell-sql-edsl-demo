@@ -19,6 +19,4 @@ printSql = putStrLn . showSqlForPostgres
 runQueryDebug :: (Default Unpackspec columns columns,
                   Default QueryRunner columns haskells) =>
                   Connection -> Query columns -> IO [haskells]
-runQueryDebug c q = do
-    printSql q
-    runQuery c q
+runQueryDebug c q = printSql q >> runQuery c q
