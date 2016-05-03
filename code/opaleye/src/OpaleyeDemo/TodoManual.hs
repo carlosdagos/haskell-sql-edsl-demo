@@ -22,3 +22,4 @@ todoTable = Table "todos" (p4 ( required "id"
 todoQuery :: Query (Column PGInt4, Column PGText, Column PGDate, Column PGInt4)
 todoQuery = queryTable todoTable
 
+
