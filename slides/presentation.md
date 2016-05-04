@@ -597,20 +597,22 @@ About those `Pi`s
 ```haskell
 
 ghci> :t id'
-id' :: Database.Relational.Query.Pi.Unsafe.Pi Todo Int32
+id' :: Pi Todo Int32
 
 ghci> :t dueDate'
-dueDate'
-  :: Database.Relational.Query.Pi.Unsafe.Pi
-       Todo time-1.5.0.1:Data.Time.Calendar.Days.Day
+dueDate' :: Pi Todo Day
 
 ghci> :t prio'
-prio' :: Database.Relational.Query.Pi.Unsafe.Pi Todo (Maybe Int32)
+prio' :: Pi Todo (Maybe Int32)
 
 ghci> :t title'
-title' :: Database.Relational.Query.Pi.Unsafe.Pi Todo String
+title' :: Pi Todo String
 
 ```
+
+`Pi r0 r1` describe projection paths from `r0` to `r1`. They also serve, as
+in this case, to describe that the type of they key is `r1` for record type
+`r0`.
 
 ---
 
