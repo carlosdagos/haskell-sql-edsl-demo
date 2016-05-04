@@ -1,4 +1,6 @@
-{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell       #-}
 
 module HRR.Todo
     ( -- * Exports
@@ -23,15 +25,12 @@ module HRR.Todo
     , piTodoPrio'
     ) where
 
-import HRR.DataSource
-import GHC.Int
-       ( Int32 )
-import Data.Time.Calendar
-       ( Day )
-import Database.HDBC.Query.TH
-       ( makeRecordPersistableDefault )
-import Prelude                   hiding (id)
-import Database.Relational.Query hiding (id')
+import           Data.Time.Calendar        (Day)
+import           Database.HDBC.Query.TH    (makeRecordPersistableDefault)
+import           Database.Relational.Query hiding (id')
+import           GHC.Int                   (Int32)
+import           HRR.DataSource
+import           Prelude                   hiding (id)
 
 
 -- | Keep in mind this will turn all the fields in the table into a

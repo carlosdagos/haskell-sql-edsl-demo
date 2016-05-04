@@ -2,12 +2,12 @@
 
 module Main where
 
-import System.Exit
-import System.IO
-import System.Environment
-import System.Console.GetOpt
-import Simple.Commands
-import Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple
+import           Simple.Commands
+import           System.Console.GetOpt
+import           System.Environment
+import           System.Exit
+import           System.IO
 
 --------------------------------------------------------------------------------
 -- | Flags with their corresponding description

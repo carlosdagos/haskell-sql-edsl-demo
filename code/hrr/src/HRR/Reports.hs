@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleContexts, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module HRR.Reports
     ( -- * Exports
@@ -12,18 +13,14 @@ module HRR.Reports
     , countFutureTodos
    ) where
 
+import           Data.Int                  (Int32)
+import           Data.Time.Calendar        (Day)
+import           Data.Time.Clock           (getCurrentTime, utctDay)
+import           Database.HDBC             (IConnection)
 import           Database.Relational.Query
-import           Database.HDBC
-                 ( IConnection )
-import           Data.Int
-                 ( Int32 )
-import           Data.Time.Clock
-                 ( getCurrentTime, utctDay )
-import           Data.Time.Calendar
-                 ( Day )
-import qualified HRR.Todo                   as T
-import qualified HRR.Hashtag                as H
-import qualified HRR.ConnectionHelpers      as C
+import qualified HRR.ConnectionHelpers     as C
+import qualified HRR.Hashtag               as H
+import qualified HRR.Todo                  as T
 
 runReports :: (IConnection conn) => conn -> IO ()
 runReports conn = do

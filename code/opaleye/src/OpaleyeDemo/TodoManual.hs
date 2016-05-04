@@ -1,5 +1,5 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module OpaleyeDemo.TodoManual
@@ -8,8 +8,8 @@ module OpaleyeDemo.TodoManual
       , todoQuery
       ) where
 
-import Opaleye
-import Data.Profunctor.Product
+import           Data.Profunctor.Product
+import           Opaleye
 
 todoTable
   :: Table (Column PGInt4, Column PGText, Column PGDate, Maybe (Column PGInt4))

@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module OpaleyeDemo.Utils
     ( -- * Exports
@@ -6,12 +7,11 @@ module OpaleyeDemo.Utils
     , runQueryDebug
     ) where
 
-import Database.PostgreSQL.Simple
-       ( Connection )
-import Data.Profunctor.Product.Default
-       ( Default )
-import Opaleye
-       ( Query, QueryRunner, Unpackspec, showSqlForPostgres, runQuery )
+import           Data.Profunctor.Product.Default (Default)
+import           Database.PostgreSQL.Simple      (Connection)
+import           Opaleye                         (Query, QueryRunner,
+                                                  Unpackspec, runQuery,
+                                                  showSqlForPostgres)
 
 printSql :: Default Unpackspec a a => Query a -> IO ()
 printSql = putStrLn . showSqlForPostgres

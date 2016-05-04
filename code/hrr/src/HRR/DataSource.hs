@@ -4,13 +4,10 @@ module HRR.DataSource
      , connect'
      ) where
 
-import Language.Haskell.TH
-import Database.HDBC.Query.TH
-       ( defineTableFromDB )
-import Database.HDBC.PostgreSQL
-       ( Connection, connectPostgreSQL )
-import Database.HDBC.Schema.PostgreSQL
-       ( driverPostgreSQL )
+import           Database.HDBC.PostgreSQL        (Connection, connectPostgreSQL)
+import           Database.HDBC.Query.TH          (defineTableFromDB)
+import           Database.HDBC.Schema.PostgreSQL (driverPostgreSQL)
+import           Language.Haskell.TH
 
 -- | The string is a connection string is based on
 -- | http://www.postgresql.org/docs/9.3/static/libpq-connect.html#LIBPQ-CONNSTRING

@@ -1,52 +1,32 @@
-{-# LANGUAGE Arrows #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Arrows                #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell       #-}
 
 --------------------------------------------------------------------------------
 -- | See TodoManual.hs to avoid using TemplateHaskell, though you should be
 -- | aware that this will make you write more boilerplate code
 module OpaleyeDemo.Todo where
 
-import Data.Int
-       ( Int64 )
-import Data.Time.Calendar
-       ( Day )
-import Control.Arrow
-       ( returnA )
-import Opaleye
-       ( Table(..), Query, Column, Nullable, PGInt4, PGText, PGDate
-       , runInsertReturning, runDelete, queryTable, required, optional
-       , restrict, (.==), (.===), pgInt4 )
-import Data.Profunctor.Product.TH
-       ( makeAdaptorAndInstance )
-import Database.PostgreSQL.Simple
-       ( Connection )
-
---------------------------------------------------------------------------------
--- | Todo Id
-data TodoId' a = TodoId { todoId :: a } deriving Show
-makeAdaptorAndInstance "pTodoId" ''TodoId'
-
-type TodoId = TodoId' Int
-type TodoIdColumn = TodoId' (Column PGInt4)
-type TodoIdColumnMaybe = TodoId' (Maybe (Column PGInt4))
-
---------------------------------------------------------------------------------
--- | Priority indicator
-data Prio' a = Prio { prio :: a } deriving Show
-makeAdaptorAndInstance "pPrio" ''Prio'
-
-type Prio = Prio' (Maybe Int)
-type PrioColumn = Prio' (Column (Nullable PGInt4))
+import           Control.Arrow              (returnA)
+import           Data.Int                   (Int64)
+import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
+import           Data.Time.Calendar         (Day)
+import           Database.PostgreSQL.Simple (Connection)
+import           Opaleye                    (Column, PGDate, PGText, Query,
+                                             Table (..), optional, pgInt4,
+                                             queryTable, required, restrict,
+                                             runDelete, runInsertReturning,
+                                             (.==), (.===))
+import           OpaleyeDemo.Ids
 
 --------------------------------------------------------------------------------
 -- | Todo declaration
-data Todo' i t d p = Todo { _id :: i
-                          , _title :: t
+data Todo' i t d p = Todo { _id      :: i
+                          , _title   :: t
                           , _dueDate :: d
-                          , _prio :: p
+                          , _prio    :: p
                           } deriving Show
 makeAdaptorAndInstance "pTodo" ''Todo'
 
@@ -74,7 +54,7 @@ todoQuery = queryTable todoTable
 
 selectTodo :: TodoId -> Query TodoColumns
 selectTodo tid = proc () -> do
-    todos <- todoQuery -< ()
+    todos    <- todoQuery -< ()
     restrict -< todoId (_id todos) .== pgInt4 (todoId tid)
     returnA  -< todos
 

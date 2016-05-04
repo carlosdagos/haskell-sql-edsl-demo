@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes       #-}
 
 -- QuasiQuotes refresher => QuasiQuotes are not like TemplateHaskell's quotes,
 -- rather they are more like TH splices. See mailing list
@@ -18,26 +18,19 @@ module Simple.Todo
     , allLateTodos
     ) where
 
-import GHC.Int
-       ( Int64 )
-import Data.Maybe
-       ( isNothing )
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromRow
-       ( fromRow, field )
-import Database.PostgreSQL.Simple.ToRow
-       ( toRow )
-import Database.PostgreSQL.Simple.ToField
-       ( toField )
-import Database.PostgreSQL.Simple.Time
-       ( Date )
-import Database.PostgreSQL.Simple.SqlQQ
-       ( sql )
+import           Data.Maybe                         (isNothing)
+import           Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple.FromRow (field, fromRow)
+import           Database.PostgreSQL.Simple.SqlQQ   (sql)
+import           Database.PostgreSQL.Simple.Time    (Date)
+import           Database.PostgreSQL.Simple.ToField (toField)
+import           Database.PostgreSQL.Simple.ToRow   (toRow)
+import           GHC.Int                            (Int64)
 
-data Todo = Todo { getId       :: !(Maybe Int) -- Can be null
-                 , getTitle    :: !String      -- Title of the todo
-                 , getDueDate  :: !Date        -- Date of the todo
-                 , getPrio     :: !(Maybe Int) -- Priority of the todo
+data Todo = Todo { getId      :: !(Maybe Int) -- Can be null
+                 , getTitle   :: !String      -- Title of the todo
+                 , getDueDate :: !Date        -- Date of the todo
+                 , getPrio    :: !(Maybe Int) -- Priority of the todo
                  } deriving (Show)
 
 instance FromRow Todo where

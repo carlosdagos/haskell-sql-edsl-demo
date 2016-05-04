@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module HRR.ConnectionHelpers
       ( -- * Exports
@@ -10,14 +11,10 @@ module HRR.ConnectionHelpers
       , runQPrint
       ) where
 
-import Database.Relational.Query
-       ( Relation, Query, relationalQuery )
-import Database.Record
-       ( ToSql, FromSql )
-import Database.HDBC
-       ( IConnection, SqlValue )
-import Database.HDBC.Record
-       ( runQuery )
+import           Database.HDBC             (IConnection, SqlValue)
+import           Database.HDBC.Record      (runQuery)
+import           Database.Record           (FromSql, ToSql)
+import           Database.Relational.Query (Query, Relation, relationalQuery)
 
 --------------------------------------------------------------------------------
 -- | Run a relation to the connection but first log the query to stdout

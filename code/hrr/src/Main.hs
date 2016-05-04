@@ -1,25 +1,19 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Main where
 
-import Data.Int
-       ( Int32 )
-import System.Exit
-       ( exitWith, exitSuccess, ExitCode(..) )
-import System.Environment
-       ( getArgs )
-import System.IO
-       ( hPutStrLn, stderr )
-import System.Console.GetOpt
-       ( getOpt, usageInfo, OptDescr(..) , ArgOrder(..), ArgDescr(..) )
-import Database.HDBC.Session
-       ( withConnectionIO, handleSqlError' )
-import Database.HDBC.PostgreSQL
-       ( Connection )
-import HRR.DataSource
-       ( connect' )
-import HRR.Commands
-       ( Flag(..), Command(..), runAndPrintCommand )
+import           Data.Int                 (Int32)
+import           Database.HDBC.PostgreSQL (Connection)
+import           Database.HDBC.Session    (handleSqlError', withConnectionIO)
+import           HRR.Commands             (Command (..), Flag (..),
+                                           runAndPrintCommand)
+import           HRR.DataSource           (connect')
+import           System.Console.GetOpt    (ArgDescr (..), ArgOrder (..),
+                                           OptDescr (..), getOpt, usageInfo)
+import           System.Environment       (getArgs)
+import           System.Exit              (ExitCode (..), exitSuccess, exitWith)
+import           System.IO                (hPutStrLn, stderr)
 
 --------------------------------------------------------------------------------
 -- | Flags with their corresponding description

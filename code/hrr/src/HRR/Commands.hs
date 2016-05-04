@@ -14,23 +14,18 @@ module HRR.Commands
     , runAddCommand
     ) where
 
+import qualified Data.ByteString.Char8     as B (pack, split, unpack)
+import           Data.Int                  (Int32)
+import           Data.List                 (intercalate)
+import           Data.Time.Calendar        (Day, fromGregorian)
+import           Database.HDBC             (IConnection, commit)
+import           Database.HDBC.Record      (runDelete, runInsert,
+                                            runInsertQuery, runQuery)
 import           Database.Relational.Query
-import           Database.HDBC
-                 ( IConnection, commit )
-import           Database.HDBC.Record
-                 ( runQuery, runInsertQuery, runInsert, runDelete )
-import           Data.Time.Calendar
-                 ( Day, fromGregorian )
-import           Data.Int
-                 ( Int32 )
-import           Data.List
-                 ( intercalate )
-import qualified Data.ByteString.Char8      as B
-                 ( unpack, pack, split )
 import           HRR.ConnectionHelpers
-import qualified HRR.Todo                   as T
-import qualified HRR.Hashtag                as H
-import qualified HRR.Reports                as R
+import qualified HRR.Hashtag               as H
+import qualified HRR.Reports               as R
+import qualified HRR.Todo                  as T
 
 --------------------------------------------------------------------------------
 -- | Commands available for the application

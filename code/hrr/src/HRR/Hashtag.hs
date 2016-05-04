@@ -1,4 +1,6 @@
-{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell       #-}
 
 module HRR.Hashtag
     ( -- * Exports
@@ -14,13 +16,10 @@ module HRR.Hashtag
     , hashtagsForTodo
     ) where
 
-import Data.Int
-       ( Int32 )
-import HRR.DataSource
-       ( defineTable )
-import Database.Relational.Query
-       ( relation', placeholder, wheres, query
-       , (.=.), (!), Relation )
+import           Data.Int                  (Int32)
+import           Database.Relational.Query (Relation, placeholder, query,
+                                            relation', wheres, (!), (.=.))
+import           HRR.DataSource            (defineTable)
 
 -- | Make sure the table is defined first, otherwise you'll get some very
 -- | bizzare errors

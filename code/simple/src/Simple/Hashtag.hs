@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes       #-}
 
 module Simple.Hashtag
     ( -- * Exports
@@ -16,19 +16,13 @@ module Simple.Hashtag
     , Hashtag
     ) where
 
-import Data.Maybe
-       ( fromJust )
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromRow
-       ( fromRow, field )
-import Database.PostgreSQL.Simple.ToRow
-       ( toRow )
-import Database.PostgreSQL.Simple.ToField
-       ( toField )
-import Database.PostgreSQL.Simple.Time
-       ( Date )
-import Database.PostgreSQL.Simple.SqlQQ
-       ( sql )
+import           Data.Maybe                         (fromJust)
+import           Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple.FromRow (field, fromRow)
+import           Database.PostgreSQL.Simple.SqlQQ   (sql)
+import           Database.PostgreSQL.Simple.Time    (Date)
+import           Database.PostgreSQL.Simple.ToField (toField)
+import           Database.PostgreSQL.Simple.ToRow   (toRow)
 
 data Hashtag = Hashtag { getTodoId  :: !(Maybe Int) -- Can be null
                        , getHashtag :: !String      -- Hashtag string val
