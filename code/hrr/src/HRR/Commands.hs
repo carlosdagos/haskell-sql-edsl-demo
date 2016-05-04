@@ -224,4 +224,3 @@ prioFromFlags []                = Nothing
 prioFromFlags (SetPriority p:_) = Just (read p :: Int32)
 prioFromFlags (_:xs)            = prioFromFlags xs
 
-
