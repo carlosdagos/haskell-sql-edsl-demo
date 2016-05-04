@@ -9,15 +9,20 @@
 -- | aware that this will make you write more boilerplate code
 module OpaleyeDemo.Todo where
 
-import Control.Arrow
-       ( returnA )
+import Data.Int
+       ( Int64 )
 import Data.Time.Calendar
        ( Day )
+import Control.Arrow
+       ( returnA )
 import Opaleye
        ( Table(..), Query, Column, Nullable, PGInt4, PGText, PGDate
-       , queryTable, required, optional, restrict, (.==), pgInt4 )
+       , runInsertReturning, runDelete, queryTable, required, optional
+       , restrict, (.==), (.===), pgInt4 )
 import Data.Profunctor.Product.TH
        ( makeAdaptorAndInstance )
+import Database.PostgreSQL.Simple
+       ( Connection )
 
 --------------------------------------------------------------------------------
 -- | Todo Id
@@ -73,4 +78,9 @@ selectTodo tid = proc () -> do
     restrict -< todoId (_id todos) .== pgInt4 (todoId tid)
     returnA  -< todos
 
+insertTodo :: Connection -> TodoInsertColumns -> IO TodoId
+insertTodo conn t = fmap head (runInsertReturning conn todoTable t _id)
 
+deleteTodo :: Connection -> TodoId -> IO Int64
+deleteTodo conn tid = runDelete conn todoTable
+                      (\t -> todoId (_id t) .=== (pgInt4 . todoId) tid)

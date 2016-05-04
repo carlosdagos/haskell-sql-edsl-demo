@@ -1086,3 +1086,4 @@ Mainly:
 - [Extensive examples on HRR](https://github.com/khibino/haskell-relational-record/blob/master/relational-record-examples/src/examples.hs)
 - [Reddit thread with opinions on Opaleye and HRR - With creators' comments](https://www.reddit.com/r/haskell/comments/3fuq4s/opaleye_or_relationalrecord/)
 - [Ben Kolera from Brisbane Functional Programming Group on Opaleye](https://www.youtube.com/watch?v=A0oVn-GXOok)
+- [Renzo Carbonara on `opaleye-sot`](http://ren.zone/articles/opaleye-sot)
