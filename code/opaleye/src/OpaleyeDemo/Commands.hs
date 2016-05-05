@@ -10,16 +10,17 @@ module OpaleyeDemo.Commands
     , Flag(..)
     ) where
 
+import qualified Data.ByteString.Char8           as B (pack, split, unpack)
 import           Data.List                       (intercalate)
 import           Data.Maybe                      (fromJust, isJust, isNothing)
-import           Data.Time.Calendar              (fromGregorian)
+import           Data.Time.Calendar              (Day, fromGregorian)
 import           Database.PostgreSQL.Simple      (Connection, Only (..))
-import           Database.PostgreSQL.Simple.Time (Date, parseDate)
 import           Opaleye
 import qualified OpaleyeDemo.Hashtag             as H
 import qualified OpaleyeDemo.Ids                 as I
 import qualified OpaleyeDemo.Todo                as T
 import qualified OpaleyeDemo.Utils               as U
+import           Prelude                         hiding (null)
 import           System.Exit
 import           System.IO
 
@@ -64,10 +65,32 @@ runFindCommand conn x flags = do
       hPutStrLn stderr "Todo not found!" >> exitWith (ExitFailure 1)
 
 runAddCommand :: Connection -> String -> [Flag] -> IO ()
-runAddCommand _ _ _ = putStrLn "addCommand"
+runAddCommand conn title flags = do
+    let p       = prioFromFlags flags
+    let prio    = if isNothing p then
+                    null
+                  else
+                    toNullable ((pgInt4 . fromJust) p)
+    let dueDate = dueDateFromFlags flags
+    let todo    = T.Todo { T._id      = I.TodoId { I.todoId = Nothing }
+                         , T._title   = pgString title
+                         , T._dueDate = pgDay dueDate
+                         , T._prio    = I.Prio { I.prio = prio }
+                         } :: T.TodoInsertColumns
+
+    tid <- T.insertTodo conn todo
+    putStrLn ("Added todo with id " ++ (show . I.todoId) tid)
 
 runCompleteCommand :: Connection -> Int -> IO ()
-runCompleteCommand _ _ = putStrLn "completeCommand"
+runCompleteCommand conn i = do
+    let tid = I.TodoId { I.todoId = i }
+    todos    <- runQuery conn (T.selectTodo tid) :: IO [T.Todo]
+    affected <- T.deleteTodo conn tid
+
+    if affected > 0 then
+      putStrLn ("Completed todo '" ++ T._title (head todos) ++ "'")
+    else
+      hPutStrLn stderr "Something went wrong!"
 
 runListCommand :: Connection -> [Flag] -> IO ()
 runListCommand conn flags = do
@@ -83,3 +106,24 @@ printTodo conn flags todo = do
 
     mapM_ print hashtags
     print todo
+
+--------------------------------------------------------------------------------
+-- | Helper function to get the due date from the list of flags
+-- | I'm assumning the format is correct
+dueDateFromFlags :: [Flag] -> Day
+dueDateFromFlags []          = error "Must specify due date!"
+dueDateFromFlags (DueBy s:_) = fromGregorian year month day
+                                 where
+                                   ymd   = B.split '-' (B.pack s)
+                                   year  = read (B.unpack (head ymd)) :: Integer
+                                   month = read (B.unpack (ymd !! 1)) :: Int
+                                   day   = read (B.unpack (ymd !! 2)) :: Int
+dueDateFromFlags (_:xs)      = dueDateFromFlags xs
+
+--------------------------------------------------------------------------------
+-- | Helper function to get the priority setting from the list of flags
+prioFromFlags :: [Flag] -> Maybe Int
+prioFromFlags []                = Nothing
+prioFromFlags (SetPriority p:_) = Just (read p :: Int)
+prioFromFlags (_:xs)            = prioFromFlags xs
+

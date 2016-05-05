@@ -612,7 +612,7 @@ title' :: Pi Todo String
 
 `Pi r0 r1` describe projection paths from `r0` to `r1`. They also serve, as
 in this case, to describe that the type of they key is `r1` for record type
-`r0`.
+`r0`. In short, they are an index value with a type annotation.
 
 ---
 
