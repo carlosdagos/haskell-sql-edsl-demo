@@ -94,7 +94,12 @@ runCompleteCommand conn i = do
 
 runListCommand :: Connection -> [Flag] -> IO ()
 runListCommand conn flags = do
-    todos <- runQuery conn T.todoQuery :: IO [T.Todo]
+    let todoQuery = if OrderByPriority `notElem` flags then
+                      T.todoQuery
+                    else
+                      T.todosByPriority
+
+    todos <- runQuery conn todoQuery :: IO [T.Todo]
     mapM_ (printTodo conn flags) todos
 
 printTodo :: Connection -> [Flag] -> T.Todo -> IO ()

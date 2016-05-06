@@ -18,7 +18,7 @@ executable haskellerz-sqlgen-opaleye
   ghc-options:         -Wall
   build-depends:       base                == 4.8.*
                      , mtl                 >= 2.2
-                     , opaleye             >= 0.4.1
+                     , opaleye             >= 0.4.2
                      , profunctors
                      , product-profunctors
                      , semigroups
