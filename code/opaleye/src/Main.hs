@@ -24,6 +24,8 @@ flags = [ Option ['d'] ["due-by"]              (ReqArg DueBy "DATE")
                 "Get todos ordered by priority"
         , Option ['p'] ["priority"]            (ReqArg SetPriority "PRIORITY")
                 "When adding a todo, you can set its priority"
+        , Option ['r'] ["raw-print"]           (NoArg RawPrint)
+                "You can print the results using Haskell's show function"
         , Option ['h'] ["help"]                (NoArg Help)
                 "Show help menu"
         , Option ['v'] ["version"]             (NoArg Version)

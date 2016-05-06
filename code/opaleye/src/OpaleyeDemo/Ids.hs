@@ -7,7 +7,8 @@
 module OpaleyeDemo.Ids where
 
 import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
-import           Opaleye                    (Column, Nullable, PGInt4, PGText)
+import           Opaleye                    (Column, Nullable, PGInt4, PGOrd,
+                                             PGText)
 
 --------------------------------------------------------------------------------
 -- | Todo Id
@@ -33,3 +34,9 @@ makeAdaptorAndInstance "pHashtagStr" ''HashtagStr'
 
 type HashtagStr = HashtagStr' String
 type HashtagStrColumn = HashtagStr' (Column PGText)
+
+--------------------------------------------------------------------------------
+-- | This is already available in 'master' but no on hackage
+-- | so please forgive this hack :)
+instance PGOrd a => PGOrd (Nullable a)
+

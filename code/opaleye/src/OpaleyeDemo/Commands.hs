@@ -10,17 +10,18 @@ module OpaleyeDemo.Commands
     , Flag(..)
     ) where
 
-import qualified Data.ByteString.Char8           as B (pack, split, unpack)
-import           Data.List                       (intercalate)
-import           Data.Maybe                      (fromJust, isJust, isNothing)
-import           Data.Time.Calendar              (Day, fromGregorian)
-import           Database.PostgreSQL.Simple      (Connection, Only (..))
+import qualified Data.ByteString.Char8      as B (pack, split, unpack)
+import           Data.List                  (intercalate)
+import           Data.Maybe                 (fromJust, fromMaybe, isJust,
+                                             isNothing)
+import           Data.Time.Calendar         (Day, fromGregorian)
+import           Database.PostgreSQL.Simple (Connection, Only (..))
 import           Opaleye
-import qualified OpaleyeDemo.Hashtag             as H
-import qualified OpaleyeDemo.Ids                 as I
-import qualified OpaleyeDemo.Todo                as T
-import qualified OpaleyeDemo.Utils               as U
-import           Prelude                         hiding (null)
+import qualified OpaleyeDemo.Hashtag        as H
+import qualified OpaleyeDemo.Ids            as I
+import qualified OpaleyeDemo.Todo           as T
+import qualified OpaleyeDemo.Utils          as U
+import           Prelude                    hiding (null)
 import           System.Exit
 import           System.IO
 
@@ -44,6 +45,7 @@ data Flag
     | SetPriority String    -- ^ --priority
     | Help                  -- ^ --help
     | Version               -- ^ --version
+    | RawPrint              -- ^ --raw
     deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
@@ -109,8 +111,17 @@ printTodo conn flags todo = do
                 else
                   return []
 
-    mapM_ print hashtags
-    print todo
+    if RawPrint `elem` flags then do
+      mapM_ print hashtags
+      print todo
+    else
+      putStrLn $ unwords
+        [ show ((I.todoId . T._id) todo) ++ "."
+        , T._title todo
+        , "(due by: " ++ show (T._dueDate todo) ++ ")"
+        , "(prio: " ++ maybe "-" show (I.prio (T._prio todo)) ++ ")"
+        , intercalate ", " (map (I.hashtagStr . H._hashtag) hashtags)
+        ]
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags
