@@ -12,41 +12,19 @@ module OpaleyeDemo.Commands
 
 import qualified Data.ByteString.Char8      as B (pack, split, unpack)
 import           Data.List                  (intercalate)
-import           Data.Maybe                 (fromJust, fromMaybe, isJust,
-                                             isNothing)
+import           Data.Maybe                 (fromJust, isNothing)
 import           Data.Time.Calendar         (Day, fromGregorian)
-import           Database.PostgreSQL.Simple (Connection, Only (..))
+import           Database.PostgreSQL.Simple (Connection)
 import           Opaleye
+import           OpaleyeDemo.Flags
 import qualified OpaleyeDemo.Hashtag        as H
 import qualified OpaleyeDemo.Ids            as I
+import qualified OpaleyeDemo.Reports        as R
 import qualified OpaleyeDemo.Todo           as T
 import qualified OpaleyeDemo.Utils          as U
 import           Prelude                    hiding (null)
 import           System.Exit
 import           System.IO
-
---------------------------------------------------------------------------------
--- | Commands available for the application
-data Command
-    = List                  -- ^ "list" command
-    | Find Int              -- ^ "find" command
-    | Add String            -- ^ "add" command
-    | Complete Int          -- ^ "complete" command
-    deriving (Show)
-
---------------------------------------------------------------------------------
--- | Flags available for the app
-data Flag
-    = DueBy String          -- ^ --due-by
-    | Late                  -- ^ --late
-    | WithHashtags          -- ^ --with-hashtags
-    | SearchHashtag String  -- ^ --hashtags
-    | OrderByPriority       -- ^ --order-by-priority
-    | SetPriority String    -- ^ --priority
-    | Help                  -- ^ --help
-    | Version               -- ^ --version
-    | RawPrint              -- ^ --raw
-    deriving (Show, Eq)
 
 --------------------------------------------------------------------------------
 -- | Main command runner
@@ -55,6 +33,7 @@ runAndPrintCommand conn (Find x) flags = runFindCommand conn x flags
 runAndPrintCommand conn (Add x) flags  = runAddCommand conn x flags
 runAndPrintCommand conn (Complete x) _ = runCompleteCommand conn x
 runAndPrintCommand conn List flags     = runListCommand conn flags
+runAndPrintCommand conn Report flags   = R.runReports conn flags
 
 runFindCommand :: Connection -> Int -> [Flag] -> IO ()
 runFindCommand conn x flags = do

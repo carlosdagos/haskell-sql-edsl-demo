@@ -54,8 +54,9 @@ todosAndHashtags = relation $ do
 todosWithoutHashtags :: Relation () T.Todo
 todosWithoutHashtags = relation $ do
     t <- query todosAndHashtags
-    wheres $ isNothing ((t ! snd') ?! H.todoId')
     let todo = t ! fst'
+    let maybeHashtag = t ! snd'
+    wheres $ isNothing (maybeHashtag ?! H.todoId')
     return $ T.Todo |$| todo ! T.id'
                     |*| todo ! T.title'
                     |*| todo ! T.dueDate'

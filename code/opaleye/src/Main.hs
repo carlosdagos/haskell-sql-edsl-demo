@@ -4,6 +4,7 @@ module Main where
 
 import           Database.PostgreSQL.Simple
 import           OpaleyeDemo.Commands
+import           OpaleyeDemo.Flags
 import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit
@@ -26,6 +27,8 @@ flags = [ Option ['d'] ["due-by"]              (ReqArg DueBy "DATE")
                 "When adding a todo, you can set its priority"
         , Option ['r'] ["raw-print"]           (NoArg RawPrint)
                 "You can print the results using Haskell's show function"
+        , Option ['g'] ["debug"]               (NoArg Debug)
+                "Run with debug mode"
         , Option ['h'] ["help"]                (NoArg Help)
                 "Show help menu"
         , Option ['v'] ["version"]             (NoArg Version)
@@ -50,6 +53,7 @@ parse args = case args of
                ("add":x:argv)   -> makeCommand (Add x) argv
                ("complete":x:_) -> makeCommand (Complete (read x :: Int)) []
                ("list":argv)    -> makeCommand List argv
+               ("report":argv)  -> makeCommand Report argv
                _                -> Left "Unrecognized command or wrong \
                                         \number of arguments."
 

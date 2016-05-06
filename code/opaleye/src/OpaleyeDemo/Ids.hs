@@ -18,6 +18,7 @@ makeAdaptorAndInstance "pTodoId" ''TodoId'
 type TodoId = TodoId' Int
 type TodoIdColumn = TodoId' (Column PGInt4)
 type TodoIdColumnMaybe = TodoId' (Maybe (Column PGInt4))
+type TodoIdColumnNullable = TodoId' (Column (Nullable PGInt4))
 
 --------------------------------------------------------------------------------
 -- | Priority indicator
@@ -34,6 +35,7 @@ makeAdaptorAndInstance "pHashtagStr" ''HashtagStr'
 
 type HashtagStr = HashtagStr' String
 type HashtagStrColumn = HashtagStr' (Column PGText)
+type HashtagStrColumnNullable = HashtagStr' (Column (Nullable PGText))
 
 --------------------------------------------------------------------------------
 -- | This is already available in 'master' but no on hackage

@@ -26,6 +26,8 @@ type HashtagColumns
   = Hashtag' TodoIdColumn HashtagStrColumn
 type HashtagInsertColumns
   = Hashtag' TodoIdColumn HashtagStrColumn
+type HashtagNullableColumns
+  = Hashtag' TodoIdColumnNullable HashtagStrColumnNullable
 type Hashtag
   = Hashtag' TodoId HashtagStr
 
