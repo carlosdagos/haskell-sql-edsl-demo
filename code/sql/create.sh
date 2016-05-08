@@ -5,7 +5,7 @@
 # owner role named 'postgres'
 #
 
-## For postgres-simple
+## For postgres-simple and Opaleye
 
 psql -d postgres -c "
 create table if not exists todos (

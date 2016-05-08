@@ -5,7 +5,7 @@
 #
 
 #
-# Insert for postgres-simple
+# Insert for postgres-simple and Opaleye
 #
 
 psql -d postgres -c "
@@ -39,7 +39,7 @@ INSERT INTO hashtags (todo_id, hashtag) VALUES
 "
 
 #
-# Insert for HRR and Opaleye
+# Insert for HRR
 #
 
 psql -d postgres -c "
