@@ -11,7 +11,6 @@ module OpaleyeDemo.Commands
     ) where
 
 import qualified Data.ByteString.Char8      as B (pack, split, unpack)
-import           Data.List                  (intercalate)
 import           Data.Maybe                 (fromJust, isNothing)
 import           Data.Time.Calendar         (Day, fromGregorian)
 import           Database.PostgreSQL.Simple (Connection)
@@ -94,13 +93,7 @@ printTodo conn flags todo = do
       mapM_ print hashtags
       print todo
     else
-      putStrLn $ unwords
-        [ show ((I.todoId . T._id) todo) ++ "."
-        , T._title todo
-        , "(due by: " ++ show (T._dueDate todo) ++ ")"
-        , "(prio: " ++ maybe "-" show (I.prio (T._prio todo)) ++ ")"
-        , intercalate ", " (map (I.hashtagStr . H._hashtag) hashtags)
-        ]
+      putStrLn $ U.todoToString todo hashtags
 
 --------------------------------------------------------------------------------
 -- | Helper function to get the due date from the list of flags

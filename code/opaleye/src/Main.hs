@@ -4,7 +4,6 @@ module Main where
 
 import           Database.PostgreSQL.Simple
 import           OpaleyeDemo.Commands
-import           OpaleyeDemo.Flags
 import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit

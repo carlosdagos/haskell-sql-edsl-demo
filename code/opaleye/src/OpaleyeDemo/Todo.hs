@@ -16,10 +16,10 @@ import           Data.Time.Calendar         (Day)
 import           Database.PostgreSQL.Simple (Connection)
 import           Opaleye                    (Column, PGDate, PGText, Query,
                                              Table (..), descNullsLast,
-                                             fromNullable, optional, orderBy,
-                                             pgInt4, queryTable, required,
-                                             restrict, runDelete,
-                                             runInsertReturning, (.==), (.===))
+                                             optional, orderBy, pgInt4,
+                                             queryTable, required, restrict,
+                                             runDelete, runInsertReturning,
+                                             (.==), (.===))
 import           OpaleyeDemo.Ids
 
 --------------------------------------------------------------------------------

@@ -7,6 +7,7 @@ module OpaleyeDemo.Reports where
 
 import           Control.Arrow              (returnA)
 import           Data.Int                   (Int64)
+import           Data.Profunctor.Product    (p2)
 import           Data.Time.Calendar         (Day)
 import           Data.Time.Clock            (getCurrentTime, utctDay)
 import           Database.PostgreSQL.Simple (Connection)
@@ -17,15 +18,18 @@ import qualified OpaleyeDemo.Ids            as I
 import qualified OpaleyeDemo.Todo           as T
 import qualified OpaleyeDemo.Utils          as U
 
+
 todosAndHashtags :: Query (T.TodoColumns, H.HashtagNullableColumns)
 todosAndHashtags = leftJoin T.todoQuery H.hashtagQuery eqTodoId
     where eqTodoId (todos, hashtags) = T._id todos .=== H._todoId hashtags
+
 
 todosWithoutHashtags :: Query T.TodoColumns
 todosWithoutHashtags = proc () -> do
     (todos, hashtags) <- todosAndHashtags -< ()
     restrict -< isNull ((I.todoId . H._todoId) hashtags)
     returnA -< todos
+
 
 todosOpDate
     :: (Column PGDate -> Column PGDate -> Column PGBool)
@@ -35,71 +39,74 @@ todosOpDate op = proc day -> do
     restrict -< T._dueDate todos `op` pgDay day
     returnA -< todos
 
+
 lateTodos :: Day -> Query T.TodoColumns
 lateTodos day = proc () -> do
     todos <- todosOpDate (.<=) -< day
     returnA -< todos
+
 
 futureTodos :: Day -> Query T.TodoColumns
 futureTodos day = proc () -> do
     todos <- todosOpDate (.>) -< day
     returnA -< todos
 
+
 countLateTodos :: Day -> Query (Column PGInt8)
 countLateTodos day
   = aggregate count . fmap (I.todoId . T._id) $ lateTodos day
+
 
 countFutureTodos :: Day -> Query (Column PGInt8)
 countFutureTodos day
   = aggregate count . fmap (I.todoId . T._id) $ futureTodos day
 
 
-{-
--- What I want
---
--- select t.id, t.title
--- from todo t
--- join hashtag h
--- on t.id = h.todo_id
--- group by t.id
--- having count(h.hashtag_str) > 1
---
-todosMultipleHashtags :: Relation () Int32
-todosMultipleHashtags = undefined
---aggregateRelation $ do
---    t <- query T.todo
---    h <- query H.hashtag
---    on $ t ! T.id' .=. h ! H.todoId'
---    g <- groupBy $ t ! T.id'
---    having $ count (h ! H.hashtagStr') .>. value 1
---    return g
+todoIdsWithHashtagAmount :: Query (Column PGInt4, Column PGInt8)
+todoIdsWithHashtagAmount
+  = aggregate (p2 (groupBy, count))
+  $ proc () -> do
+        hashtags <- H.hashtagQuery -< ()
+        returnA -< ( (I.todoId . H._todoId) hashtags
+                   , (I.hashtagStr . H._hashtag) hashtags)
 
-hashtagsWithMultipleTodos :: Relation () String
-hashtagsWithMultipleTodos = undefined
 
---
--- What I want
---
--- select hashtag_str, count(*)
--- from hashtag
--- group by hashtag_str
--- having count(hashtag_str) > 1
--- order by count(hashtag_str) desc;
---
-mostPopularHashtags :: Relation () String
-mostPopularHashtags = undefined
---do
---    h <- query H.hashtag
---    g <- groupBy $ h ! H.hashtagStr'
---    having $ count (h ! H.hashtagStr') .>. value 1
---    desc $ count (h ! H.hashtagStr')
---    return g
--}
+todosMultipleHashtags :: Query T.TodoColumns
+todosMultipleHashtags = proc () -> do
+    todos         <- T.todoQuery -< ()
+    (tid, hcount) <- todoIdsWithHashtagAmount -< ()
+    restrict -< (I.todoId . T._id) todos .== tid
+    restrict -< hcount .> pgInt8 1
+    returnA -< todos
+
+
+hashtagsCounted :: Query (Column PGText, Column PGInt8)
+hashtagsCounted
+  = aggregate (p2 (groupBy, count))
+  $ proc () -> do
+        hashtags <- H.hashtagQuery -< ()
+        returnA -< ( (I.hashtagStr . H._hashtag) hashtags
+                   , (I.todoId . H._todoId) hashtags)
+
+
+mostPopularHashtags :: Query (Column PGText)
+mostPopularHashtags = proc () -> do
+    (hashtag, hcount) <- hashtagsCounted -< ()
+    restrict -< hcount .>= pgInt8 2
+    returnA -< hashtag
+
 
 runReports :: Connection -> [Flag] -> IO ()
 runReports conn flags = do
---    putStrLn "Most popular hashtags:"
---    runQuery mostPopularHashtags
+    let printTodo = flip U.todoToString []
+
+    putStrLn "Most popular hashtags:"
+    mph <- if Debug `elem` flags then
+             U.runQueryDebug conn mostPopularHashtags :: IO [String]
+           else
+             runQuery conn mostPopularHashtags :: IO [String]
+
+    mapM_ print mph
 
     putStrLn "Todos without hashtags:"
     twh <- if Debug `elem` flags then
@@ -107,7 +114,8 @@ runReports conn flags = do
            else
              runQuery conn todosWithoutHashtags :: IO [T.Todo]
 
-    mapM_ print twh
+    mapM_ (putStrLn . printTodo) twh
+
     now <- fmap utctDay getCurrentTime
 
     putStrLn "Number of late todos:"
@@ -132,10 +140,12 @@ runReports conn flags = do
     else
       print . head $ ft
 
---    putStrLn "Todos with multiple hashtags:"
---    runQuery todosMultipleHashtags
+    putStrLn "Todos with multiple hashtags:"
+    tmh <- if Debug `elem` flags then
+             U.runQueryDebug conn todosMultipleHashtags :: IO [T.Todo]
+           else
+             runQuery conn todosMultipleHashtags :: IO [T.Todo]
 
---    putStrLn "Hashtags with multiple todos:"
---    runQuery hashtagsWithMultipleTodos
+    mapM_ (putStrLn . printTodo) tmh
 
 
