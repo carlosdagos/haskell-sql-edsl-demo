@@ -1244,7 +1244,6 @@ Rationalising about operators
 
 ```haskell
 -- file opaleye/src/Reports.hs
-
 todosOpDate
     :: (Column PGDate -> Column PGDate -> Column PGBool)
     -> QueryArr Day T.TodoColumns
@@ -1253,12 +1252,10 @@ todosOpDate op = proc day -> do
     restrict -< T._dueDate todos `op` pgDay day
     returnA -< todos
 
-
 lateTodos :: Day -> Query T.TodoColumns
 lateTodos day = proc () -> do
     todos <- todosOpDate (.<=) -< day
     returnA -< todos
-
 
 futureTodos :: Day -> Query T.TodoColumns
 futureTodos day = proc () -> do
