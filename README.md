@@ -3,7 +3,7 @@ README
 
 This repo contains the material I used for a HaskellerZ meetup in Zurich.
 
-You can can see information about that [here](www.meetup.com/HaskellerZ/events/230150627/).
+You can can see information about that [here](https://www.meetup.com/HaskellerZ/events/230150627/).
 
 ## Composable, type-safe SQL query generation in Haskell
 
