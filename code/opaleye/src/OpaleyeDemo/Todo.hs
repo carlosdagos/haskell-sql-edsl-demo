@@ -29,7 +29,25 @@ data Todo' i t d p = Todo { _id      :: i
                           , _dueDate :: d
                           , _prio    :: p
                           } deriving Show
+
 makeAdaptorAndInstance "pTodo" ''Todo'
+
+{-
+
+The instance generated will be
+
+instance (ProductProfunctor p, Default p a1_0 a1_1,
+          Default p a2_0 a2_1, Default p a3_0 a3_1, Default p a4_0 a4_1) =>
+          Default p (Todo' a1_0 a2_0 a3_0 a4_0) (Todo' a1_1 a2_1 a3_1 a4_1)
+
+and pTodo will have the type
+
+pTodo
+  :: ProductProfunctor p =>
+     Todo' (p a1_0 a1_1) (p a2_0 a2_1) (p a3_0 a3_1) (p a4_0 a4_1)
+     -> p (Todo' a1_0 a2_0 a3_0 a4_0) (Todo' a1_1 a2_1 a3_1 a4_1)
+
+-}
 
 --------------------------------------------------------------------------------
 -- | Todo Columns

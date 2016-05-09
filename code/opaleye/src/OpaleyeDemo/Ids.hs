@@ -13,6 +13,7 @@ import           Opaleye                    (Column, Nullable, PGInt4, PGOrd,
 --------------------------------------------------------------------------------
 -- | Todo Id
 data TodoId' a = TodoId { todoId :: a } deriving Show
+
 makeAdaptorAndInstance "pTodoId" ''TodoId'
 
 type TodoId = TodoId' Int
@@ -23,6 +24,7 @@ type TodoIdColumnNullable = TodoId' (Column (Nullable PGInt4))
 --------------------------------------------------------------------------------
 -- | Priority indicator
 data Prio' a = Prio { prio :: a } deriving Show
+
 makeAdaptorAndInstance "pPrio" ''Prio'
 
 type Prio = Prio' (Maybe Int)
@@ -31,6 +33,7 @@ type PrioColumn = Prio' (Column (Nullable PGInt4))
 --------------------------------------------------------------------------------
 -- | Hashtag
 data HashtagStr' a = HashtagStr { hashtagStr :: a } deriving Show
+
 makeAdaptorAndInstance "pHashtagStr" ''HashtagStr'
 
 type HashtagStr = HashtagStr' String

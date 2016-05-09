@@ -1,6 +1,6 @@
 class: center, middle
 
-# Generating SQL Queries in Haskell
+# Composable, type-safe SQL generation in Haskell
 
 #### HaskellerZ Meetup
 #### Zürich, May 19th 2016
@@ -485,7 +485,7 @@ getBadTodos
 
 - Developed by the good people at Asahi Net, Inc
 
-- Developed from scratch as a response to some issues found using HaskellDB
+- Developed as a response to issues found using HaskellDB
 
 - Runs on top of [`HDBC`](https://hackage.haskell.org/package/HDBC)
 
@@ -542,11 +542,11 @@ $(defineTable "public" "todo" [''Show])
 
 #### What happened?
 
-- HRR will use TH to generate our data declaration
+- HRR will use TH to generate our record type
 
 - A database connection will be needed on compilation time
 
-- Our data declaration will have the fields of the table in CamelCase
+- Our record will have the fields of the table in CamelCase
 
 - I did have to define the `defineTable` method, see file
 `hrr/src/HRR/DataSource.hs`, with PostgreSQL-specific functions.
@@ -610,9 +610,10 @@ title' :: Pi Todo String
 
 ```
 
-`Pi r0 r1` describe projection paths from `r0` to `r1`. They also serve, as
-in this case, to describe that the type of they key is `r1` for record type
-`r0`. In short, they are an index value with a type annotation.
+`Pi r0 r1` describe projection paths from `r0` to `r1`.
+
+They also serve to describe that the type of they key is `r1` for record type
+`r0`.
 
 ---
 
@@ -687,7 +688,7 @@ runAddCommand conn title flags = do
     let prio   = prioFromFlags flags
     let dueDate = dueDateFromFlags flags
 
-    -- I can build now my partial object
+    -- I can build now my partial record
     let piToInsert = T.PiTodo { T.piTodoTitle = title
                               , T.piTodoDate  = dueDate
                               , T.piTodoPrio  = prio
@@ -722,8 +723,6 @@ runAlternativeAddCommand conn title flags = do
     let priority = prioFromFlags flags
     runInsert conn insertTodoAlt ((title, dueDate), priority)
 ```
-
-A bit easier, but less type-safe
 
 ---
 
@@ -886,13 +885,15 @@ todosAndHashtags = relation $ do
 todosWithoutHashtags :: Relation () T.Todo
 todosWithoutHashtags = relation $ do
     t <- query todosAndHashtags
-    wheres $ isNothing ((t ! snd') ?! H.todoId')
     let todo = t ! fst'
+    let maybeHashtag = t ! snd'
+    wheres $ isNothing (maybeHashtag ?! H.todoId')
     return $ T.Todo |$| todo ! T.id'
                     |*| todo ! T.title'
                     |*| todo ! T.dueDate'
                     |*| todo ! T.prio'
 ```
+
 ---
 
 ## Haskell Relational Record (HRR)
@@ -1028,10 +1029,12 @@ Monad.)
 
 Developed by
 
+- Tom Ellis - _Cambridge, UK_
 - Silk (Erik Hesselink, Adam Bergmark) - _Amsterdam, NL_
 - Karamaan (Christopher Lewis) - _NY, USA_
 - Fynder (Renzo Carbonara, Oliver Charles) - _London, UK_
 - Daniel Patterson, Jakub Ryška, Travis Staton
+- et al
 
 Runs on top of [`postgresql-simple`](https://hackage.haskell.org/package/postgresql-simple)
 
@@ -1049,8 +1052,6 @@ executable haskellerz-sqlgen-opaleye
                      , text
                      , time
                      , postgresql-simple
-  hs-source-dirs:      src
-  default-language:    Haskell2010
 ```
 
 ---
@@ -1058,6 +1059,347 @@ executable haskellerz-sqlgen-opaleye
 ## Opaleye
 
 #### My new definition for `Todo`
+
+```haskell
+-- file opaleye/src/OpaleyeDemo/Todo.hs
+{-# LANGUAGE Arrows #-}
+
+import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
+
+data Todo' i t d p = Todo { _id      :: i
+                          , _title   :: t
+                          , _dueDate :: d
+                          , _prio    :: p
+                          } deriving Show
+
+makeAdaptorAndInstance "pTodo" ''Todo'
+
+type TodoColumns
+  = Todo' TodoIdColumn (Column PGText) (Column PGDate) PrioColumn
+type TodoInsertColumns
+  = Todo' TodoIdColumnMaybe (Column PGText) (Column PGDate) PrioColumn
+type Todo
+  = Todo' TodoId String Day Prio
+
+```
+
+Polymorphic records are important!
+
+See all column types: [Opaleye.PGTypes](http://hackage.haskell.org/package/opaleye-0.4.2.0/docs/Opaleye-PGTypes.html)
+
+---
+
+## Opaleye
+
+#### My new definition for `Todo`
+
+```haskell
+-- file opaleye/src/OpaleyeDemo/Todo.hs
+
+todoTable :: Table TodoInsertColumns TodoColumns
+todoTable = Table "todos" $ pTodo Todo
+    { _id      = pTodoId . TodoId $ optional "id"
+    , _title   = required "title"
+    , _dueDate = required "due_date"
+    , _prio    = pPrio . Prio $ required "prio"
+    }
+
+todoQuery :: Query TodoColumns
+todoQuery = queryTable todoTable
+
+```
+
+`Query TodoColumns` is an alias of `QueryArr () TodoColumns`
+
+---
+
+## Opaleye
+
+#### Easier to define fine-grained types...
+
+... In order to make sure that we're never joining incoherently
+
+```haskell
+-- file opaleye/src/OpaleyeDemo/Ids.hs
+
+data TodoId' a = TodoId { todoId :: a } deriving Show
+
+makeAdaptorAndInstance "pTodoId" ''TodoId'
+
+type TodoId = TodoId' Int
+type TodoIdColumn = TodoId' (Column PGInt4)
+type TodoIdColumnMaybe = TodoId' (Maybe (Column PGInt4))
+type TodoIdColumnNullable = TodoId' (Column (Nullable PGInt4))
+```
+
+Product profunctors allow Opaleye to make transformations when running the
+query against the database.
+
+---
+
+## Opaleye
+
+#### Simple reads, inserts, deletes
+
+```haskell
+-- file opaleye/src/Todo.hs
+
+insertTodo :: Connection -> TodoInsertColumns -> IO TodoId
+insertTodo conn t = fmap head (runInsertReturning conn todoTable t _id)
+
+deleteTodo :: Connection -> TodoId -> IO Int64
+deleteTodo conn tid = runDelete conn todoTable
+                      (\t -> todoId (_id t) .=== (pgInt4 . todoId) tid)
+
+```
+
+---
+
+## Opaleye
+
+#### Simple reads, inserts, deletes
+
+```haskell
+-- file opaleye/src/Todo.hs
+selectTodo :: TodoId -> Query TodoColumns
+selectTodo tid = proc () -> do
+    todos    <- todoQuery -< ()
+    restrict -< todoId (_id todos) .== pgInt4 (todoId tid)
+    returnA  -< todos
+```
+
+```sql
+SELECT "id0_1" as "result1_2",
+       "title1_1" as "result2_2",
+       "due_date2_1" as "result3_2",
+       "prio3_1" as "result4_2"
+FROM (SELECT *
+      FROM (SELECT "id" as "id0_1",
+                   "title" as "title1_1",
+                   "due_date" as "due_date2_1",
+                   "prio" as "prio3_1"
+            FROM "todos" as "T1") as "T1"
+WHERE (("id0_1") = 1)) as "T1"
+```
+
+Arrows instead of Monads!
+
+---
+
+## Opaleye
+
+#### Composing queries
+
+```haskell
+-- file opaleye/src/Todo.hs
+todoQuery :: Query TodoColumns
+todoQuery = queryTable todoTable
+
+todosByPriority :: Query TodoColumns
+todosByPriority = orderBy (descNullsLast (prio . _prio)) todoQuery
+```
+
+```sql
+SELECT "id0_1" as "result1_2",
+       "title1_1" as "result2_2",
+       "due_date2_1" as "result3_2",
+       "prio3_1" as "result4_2"
+FROM (SELECT *
+      FROM (SELECT *
+            FROM (SELECT *
+                  FROM (SELECT "id" as "id0_1",
+                                "title" as "title1_1",
+                                 "due_date" as "due_date2_1,
+                                 "prio" as "prio3_1"
+                        FROM "todos" as "T1") as "T1") as "T1"
+            ORDER BY "prio3_1" DESC NULLS LAST) as "T1") as "T1"
+```
+
+---
+
+## Opaleye
+
+#### Composing queries
+
+```haskell
+-- file opaleye/src/Reports.hs
+todosAndHashtags :: Query (T.TodoColumns, H.HashtagNullableColumns)
+todosAndHashtags = leftJoin T.todoQuery H.hashtagQuery eqTodoId
+    where eqTodoId (todos, hashtags) = T._id todos .=== H._todoId hashtags
+
+todosWithoutHashtags :: Query T.TodoColumns
+todosWithoutHashtags = proc () -> do
+    (todos, hashtags) <- todosAndHashtags -< ()
+    restrict -< isNull ((I.todoId . H._todoId) hashtags)
+    returnA -< todos
+```
+
+---
+
+### Opaleye
+
+#### Composing queries
+
+Rationalising about operators
+
+```haskell
+-- file opaleye/src/Reports.hs
+
+todosOpDate
+    :: (Column PGDate -> Column PGDate -> Column PGBool)
+    -> QueryArr Day T.TodoColumns
+todosOpDate op = proc day -> do
+    todos <- T.todoQuery -< ()
+    restrict -< T._dueDate todos `op` pgDay day
+    returnA -< todos
+
+
+lateTodos :: Day -> Query T.TodoColumns
+lateTodos day = proc () -> do
+    todos <- todosOpDate (.<=) -< day
+    returnA -< todos
+
+
+futureTodos :: Day -> Query T.TodoColumns
+futureTodos day = proc () -> do
+    todos <- todosOpDate (.>) -< day
+    returnA -< todos
+```
+
+---
+
+### Opaleye
+
+#### Composing queries
+
+Rationalising about operators
+
+```haskell
+-- file opaleye/src/Reports.hs
+countLateTodos :: Day -> Query (Column PGInt8)
+countLateTodos d = aggregate count . fmap (I.todoId . T._id) $ lateTodos d
+
+countFutureTodos :: Day -> Query (Column PGInt8)
+countFutureTodos d = aggregate count . fmap (I.todoId . T._id) $ futureTodos d
+```
+
+```sql
+SELECT "result0_2" as "result1_3"
+FROM (SELECT *
+      FROM (SELECT COUNT("id0_1") as "result0_2"
+            FROM (SELECT *
+                  FROM (SELECT "id" as "id0_1",
+                               "title" as "title1_1",
+                               "due_date" as "due_date2_1",
+                               "prio" as "prio3_1"
+                        FROM "todos" as "T1") as "T1"
+                  WHERE (("due_date2_1") <= (CAST('2016-05-19' AS date)))) as "T1"
+            GROUP BY COALESCE(0)) as "T1") as "T1"
+```
+
+---
+
+### Opaleye
+
+#### `GROUP BY`-`HAVING` as an inner join
+
+```haskell
+-- file opaleye/src/Reports.hs
+todoIdsWithHashtagAmount :: Query (Column PGInt4, Column PGInt8)
+todoIdsWithHashtagAmount
+  = aggregate (p2 (groupBy, count))
+  $ proc () -> do
+        hashtags <- H.hashtagQuery -< ()
+        returnA -< ( (I.todoId . H._todoId) hashtags
+                   , (I.hashtagStr . H._hashtag) hashtags)
+
+
+todosMultipleHashtags :: Query T.TodoColumns
+todosMultipleHashtags = proc () -> do
+    todos         <- T.todoQuery -< ()
+    (tid, hcount) <- todoIdsWithHashtagAmount -< ()
+    restrict -< (I.todoId . T._id) todos .== tid
+    restrict -< hcount .> pgInt8 1
+    returnA -< todos
+```
+
+---
+
+### Opaleye
+
+#### `GROUP BY`-`HAVING` as a self inner join
+
+```haskell
+-- file opaleye/src/Reports.hs
+
+hashtagsCounted :: Query (Column PGText, Column PGInt8)
+hashtagsCounted
+  = aggregate (p2 (groupBy, count))
+  $ proc () -> do
+        hashtags <- H.hashtagQuery -< ()
+        returnA -< ( (I.hashtagStr . H._hashtag) hashtags
+                   , (I.todoId . H._todoId) hashtags)
+
+mostPopularHashtags :: Query (Column PGText)
+mostPopularHashtags = proc () -> do
+    (hashtag, hcount) <- hashtagsCounted -< ()
+    restrict -< hcount .>= pgInt8 2
+    returnA -< hashtag
+```
+
+---
+
+### Opaleye
+
+#### Tying the knot
+
+```haskell
+import Opaleye
+
+runQuery
+  :: Data.Profunctor.Product.Default.Default
+       QueryRunner columns haskells =>
+     Connection -> Opaleye.Query columns -> IO [haskells]
+```
+
+This means that we can run `Query columns`, and so long as there's a
+`Profunctor.Product.Default` instance that can transform our `columns`
+into `haskells`, we'll be able to retrieve the information.
+
+If there's no such instance, our program won't compile.
+
+More often than not, I was doing `runQuery conn myQuery :: IO [Type]`
+
+`QueryArr Input Output` is not runnable, as they're in need of input (i.e.:
+they're meant to be used as a mean of composability, with input-less arrows
+providing them with input).
+
+---
+
+### Opaleye
+
+#### Further usable functionality
+
+- Pagination
+- Search
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/A0oVn-GXOok" frameborder="0" allowfullscreen></iframe>
+
+---
+
+## Closing Notes & Considerations
+
+### HRR
+
+- Monadic approach is not mandatory, [you can do HRR with Arrows](https://github.com/khibino/haskell-relational-record/blob/master/doc/slide/haskell-hackathon-201412/arr.hs).
+- Limited to either records or (nested) pairs.
+- Currently there's no 100% way to prove the validity of HRR conversions.
+
+### Opaleye
+
+- Schema changes still require code changes.
+- No placeholders.
+- Varchar lengths are not contemplated.
 
 ---
 
