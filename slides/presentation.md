@@ -1209,8 +1209,8 @@ FROM (SELECT *
             FROM (SELECT *
                   FROM (SELECT "id" as "id0_1",
                                 "title" as "title1_1",
-                                 "due_date" as "due_date2_1,
-                                 "prio" as "prio3_1"
+                                "due_date" as "due_date2_1,
+                                "prio" as "prio3_1"
                         FROM "todos" as "T1") as "T1") as "T1"
             ORDER BY "prio3_1" DESC NULLS LAST) as "T1") as "T1"
 ```
