@@ -62,6 +62,20 @@ alternative version of Opaleye.]
 
 ---
 
+## What this talk is about
+
+#### What does it mean to be _composable_?
+
+Abstraction, projection, and special operations as means of taking simple,
+well-tested queries to provide arbitrarily complex ones.
+
+#### What does it mean to be _type-safe_?
+
+Having pertinent data structures that represent our queries to provide
+compile-time safety to our programs.
+
+---
+
 ## Sample application and design
 
 We'll be looking at how to make an application that will allow me
