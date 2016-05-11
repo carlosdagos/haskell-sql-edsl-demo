@@ -35,7 +35,8 @@ I've been paid to write Java, Scala and PHP.
 
 I've been kindly asked to write Ruby, Python, Clojure, Objective-C, others...
 
-I'm in (newfound) love with Haskell.
+I'm in [(newfound)](http://www.catb.org/jargon/html/L/larval-stage.html)
+love with Haskell.
 ]
 
 ---
@@ -1236,7 +1237,7 @@ FROM (SELECT *
 #### Composing queries
 
 ```haskell
--- file opaleye/src/Reports.hs
+-- file opaleye/src/OpaleyeDemo/Reports.hs
 todosAndHashtags :: Query (T.TodoColumns, H.HashtagNullableColumns)
 todosAndHashtags = leftJoin T.todoQuery H.hashtagQuery eqTodoId
     where eqTodoId (todos, hashtags) = T._id todos .=== H._todoId hashtags
@@ -1246,6 +1247,12 @@ todosWithoutHashtags = proc () -> do
     (todos, hashtags) <- todosAndHashtags -< ()
     restrict -< isNull ((I.todoId . H._todoId) hashtags)
     returnA -< todos
+```
+
+```haskell
+--- file opaleye/src/OpaleyeDemo/Hashtag.hs
+type HashtagNullableColumns
+  = Hashtag' TodoIdColumnNullable HashtagStrColumnNullable
 ```
 
 ---
