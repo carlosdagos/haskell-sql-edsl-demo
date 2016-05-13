@@ -789,6 +789,13 @@ FROM PUBLIC.todo T0
 ORDER BY T0.prio DESC
 ```
 
+```haskell
+gchi> :t query
+query :: MonadQuery m => Relation () r -> m (Projection Flat r)
+ghci> :t relation
+relation :: QuerySimple (Projection Flat r) -> Relation () r
+```
+
 ---
 
 ## Haskell Relational Record (HRR)
@@ -991,6 +998,12 @@ mostPopularHashtags = do
     having $ count (h ! H.hashtagStr') .>. value 1
     desc $ count (h ! H.hashtagStr')
     return g
+```
+
+```haskell
+ghci> :t aggregateRelation
+aggregateRelation
+  :: QueryAggregate (Projection Aggregated r) -> Relation () r
 ```
 
 ---
