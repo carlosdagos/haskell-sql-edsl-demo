@@ -981,16 +981,41 @@ todosMultipleHashtags = aggregateRelation $ do
     h <- query H.hashtag
     on $ t ! T.id' .=. h ! H.todoId'
     g <- groupBy $ t ! T.id'
-    having $ count (h ! H.hashtagStr') .>. value 1
+    having $ count (h ! H.hashtagStr') .>. value (1 :: Int)
     return g
+```
 
-mostPopularHashtags :: Relation () String
-mostPopularHashtags = do
+Produces
+
+```sql
+SELECT ALL T0.id AS f0 FROM PUBLIC.todo T0
+INNER JOIN PUBLIC.hashtag T1
+ON (T0.id = T1.todo_id)
+GROUP BY T0.id
+HAVING (COUNT(T1.hashtag_str) > 1)
+```
+---
+
+## Haskell Relational Record (HRR)
+
+#### Aggregation
+
+```haskell
+mostPopularHashtags :: Relation () (String, Int32)
+mostPopularHashtags = aggregateRelation $ do
     h <- query H.hashtag
     g <- groupBy $ h ! H.hashtagStr'
-    having $ count (h ! H.hashtagStr') .>. value 1
-    desc $ count (h ! H.hashtagStr')
-    return g
+    having $ count (h ! H.hashtagStr') .>. value (1 :: Int)
+    return $ g >< count (h ! H.hashtagStr')
+```
+
+Produces
+
+```sql
+SELECT ALL T0.hashtag_str AS f0, COUNT(T0.hashtag_str) AS f1
+FROM PUBLIC.hashtag T0
+GROUP BY T0.hashtag_str
+HAVING (COUNT(T0.hashtag_str) > 1)
 ```
 
 ---
