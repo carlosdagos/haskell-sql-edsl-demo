@@ -17,9 +17,9 @@ A basic way of talking to a PostgreSQL database is using [`postgresql-simple`](h
 
 #### What does it mean to be _composable_?
 
-Composability means taking small, well-tested queries, and restricting them, joining them, aggregating, counting, etc. When we start composing queries, we also touch on the subject of projecting them. Projection means discarding columns from our queries.
+Composability means taking small, well-tested queries, and "mixing" them in some form. From there we can restrict them, join them, aggregate, count, order, and delivering a composable structure that can be reutilized. When we start composing queries, we also touch on the subject of projecting them. Projection means discarding columns from our queries.
 
-Through projection and means of composition we can achieve arbitrarily complex results while keeping a comprehensible and modular approach. Both Opaleye and Haskell Relational Record ensure meaningful composition with the use of different techniques.
+Through projection and other means of composition we can achieve arbitrarily complex results while keeping a comprehensible and modular approach. Both Opaleye and Haskell Relational Record ensure meaningful composition with the use of different techniques.
 
 #### What does it mean to be _type-safe_?
 

@@ -101,51 +101,30 @@ runReports conn flags = do
     let printTodo = flip U.todoToString []
 
     putStrLn "Most popular hashtags:"
-    mph <- if Debug `elem` flags then
-             U.runQueryDebug conn mostPopularHashtags :: IO [String]
-           else
-             runQuery conn mostPopularHashtags :: IO [String]
-
+    mph <- U.runQ conn mostPopularHashtags flags :: IO [String]
     mapM_ print mph
 
     putStrLn "Todos without hashtags:"
-    twh <- if Debug `elem` flags then
-             U.runQueryDebug conn todosWithoutHashtags :: IO [T.Todo]
-           else
-             runQuery conn todosWithoutHashtags :: IO [T.Todo]
-
+    twh <- U.runQ conn todosWithoutHashtags flags :: IO [T.Todo]
     mapM_ (putStrLn . printTodo) twh
 
     now <- fmap utctDay getCurrentTime
 
     putStrLn "Number of late todos:"
-    lt <- if Debug `elem` flags then
-            U.runQueryDebug conn (countLateTodos now) :: IO [Int64]
-          else
-            runQuery conn (countLateTodos now) :: IO [Int64]
-
+    lt <- U.runQ conn (countLateTodos now) flags :: IO [Int64]
     if null lt then
       print (0 :: Int)
     else
       print . head $ lt
 
     putStrLn "Number of upcoming todos:"
-    ft <- if Debug `elem` flags then
-            U.runQueryDebug conn (countFutureTodos now) :: IO [Int64]
-          else
-            runQuery conn (countFutureTodos now) :: IO [Int64]
-
+    ft <- U.runQ conn (countFutureTodos now) flags :: IO [Int64]
     if null ft then
       print (0 :: Int)
     else
       print . head $ ft
 
     putStrLn "Todos with multiple hashtags:"
-    tmh <- if Debug `elem` flags then
-             U.runQueryDebug conn todosMultipleHashtags :: IO [T.Todo]
-           else
-             runQuery conn todosMultipleHashtags :: IO [T.Todo]
-
+    tmh <- U.runQ conn todosMultipleHashtags flags :: IO [T.Todo]
     mapM_ (putStrLn . printTodo) tmh
-
 

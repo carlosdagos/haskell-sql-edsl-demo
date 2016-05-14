@@ -789,6 +789,13 @@ FROM PUBLIC.todo T0
 ORDER BY T0.prio DESC
 ```
 
+```haskell
+gchi> :t query
+query :: MonadQuery m => Relation () r -> m (Projection Flat r)
+ghci> :t relation
+relation :: QuerySimple (Projection Flat r) -> Relation () r
+```
+
 ---
 
 ## Haskell Relational Record (HRR)
@@ -1016,6 +1023,12 @@ SELECT ALL T0.hashtag_str AS f0, COUNT(T0.hashtag_str) AS f1
 FROM PUBLIC.hashtag T0
 GROUP BY T0.hashtag_str
 HAVING (COUNT(T0.hashtag_str) > 1)
+```
+
+```haskell
+ghci> :t aggregateRelation
+aggregateRelation
+  :: QueryAggregate (Projection Aggregated r) -> Relation () r
 ```
 
 ---

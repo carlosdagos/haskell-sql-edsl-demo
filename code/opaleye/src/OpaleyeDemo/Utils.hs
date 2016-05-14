@@ -5,6 +5,7 @@ module OpaleyeDemo.Utils
     ( -- * Exports
       printSql
     , runQueryDebug
+    , runQ
     , todoToString
     ) where
 
@@ -14,6 +15,7 @@ import           Database.PostgreSQL.Simple      (Connection)
 import           Opaleye                         (Query, QueryRunner,
                                                   Unpackspec, runQuery,
                                                   showSqlForPostgres)
+import           OpaleyeDemo.Flags
 import qualified OpaleyeDemo.Hashtag             as H
 import qualified OpaleyeDemo.Ids                 as I
 import qualified OpaleyeDemo.Todo                as T
@@ -25,6 +27,14 @@ runQueryDebug :: (Default Unpackspec columns columns,
                   Default QueryRunner columns haskells) =>
                   Connection -> Query columns -> IO [haskells]
 runQueryDebug c q = printSql q >> runQuery c q
+
+runQ :: (Default Unpackspec columns columns,
+         Default QueryRunner columns haskells) =>
+         Connection -> Query columns -> [Flag] -> IO [haskells]
+runQ c q flags = if Debug `elem` flags then
+                    runQueryDebug c q
+                 else
+                    runQuery c q
 
 todoToString :: T.Todo -> [H.Hashtag] -> String
 todoToString todo hashtags
