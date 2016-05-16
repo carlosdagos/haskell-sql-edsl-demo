@@ -862,6 +862,9 @@ todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
     (ph, t) <- query' todosByPriorityAndBeforeDate
     return (ph, t ! T.id' >< t ! T.title')
 ```
+`><` Operator constructs pair results. Same as `(,) |$| x |*| y`.
+
+Provided functions `fst'` and `snd'`.
 
 Produces
 
@@ -1295,7 +1298,7 @@ type HashtagNullableColumns
 
 ---
 
-### Opaleye
+## Opaleye
 
 #### Composing queries
 
@@ -1324,7 +1327,7 @@ futureTodos day = proc () -> do
 
 ---
 
-### Opaleye
+## Opaleye
 
 #### Composing queries
 
@@ -1355,7 +1358,7 @@ FROM (SELECT *
 
 ---
 
-### Opaleye
+## Opaleye
 
 #### `GROUP BY`-`HAVING` as an inner join
 
@@ -1381,7 +1384,7 @@ todosMultipleHashtags = proc () -> do
 
 ---
 
-### Opaleye
+## Opaleye
 
 #### `GROUP BY`-`HAVING` as a self inner join
 
@@ -1405,7 +1408,7 @@ mostPopularHashtags = proc () -> do
 
 ---
 
-### Opaleye
+## Opaleye
 
 #### Tying the knot
 
@@ -1432,7 +1435,7 @@ providing them with input).
 
 ---
 
-### Opaleye
+## Opaleye
 
 #### Further usable functionality
 
@@ -1487,3 +1490,4 @@ Mainly:
 - [Reddit thread with opinions on Opaleye and HRR - With creators' comments](https://www.reddit.com/r/haskell/comments/3fuq4s/opaleye_or_relationalrecord/)
 - [Ben Kolera from Brisbane Functional Programming Group on Opaleye](https://www.youtube.com/watch?v=A0oVn-GXOok)
 - [Renzo Carbonara on `opaleye-sot`](http://ren.zone/articles/opaleye-sot)
+- [Tom Ellis on Arrows](https://ocharles.org.uk/blog/guest-posts/2014-12-21-arrows.html)
