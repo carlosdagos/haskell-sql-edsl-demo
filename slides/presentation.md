@@ -498,15 +498,11 @@ getBadTodos
 
 ## Haskell Relational Record (HRR)
 
-- Developed by the good people at Asahi Net, Inc
-
+- Developed Kei Hibino and other good people at Asahi Net, Inc
 - Developed as a response to issues found using HaskellDB
-
 - Runs on top of [`HDBC`](https://hackage.haskell.org/package/HDBC)
 
-Cabal file
-
-```code
+```haskell
 ...
 executable haskellerz-sqlgen-hrr
   ghc-options:         -Wall -Werror -fsimpl-tick-factor=500
@@ -1076,8 +1072,8 @@ aggregateRelation
 - `QueryJoin`, `Orderings`, `Restrictings` => `MonadQuery`
 - `Orderings`, `Restrictings` => `MonadAggregate`
 
-Accumulates various context in a State Monad context (i.e.: Uses `StateT`
-Monad.)
+Accumulates various context in a State Monad context (like join product, group
+keys and ordering.)
 
 ---
 
@@ -1086,23 +1082,18 @@ Monad.)
 Developed by
 
 - Tom Ellis - _Cambridge, UK_
-- Silk (Erik Hesselink, Adam Bergmark) - _Amsterdam, NL_
-- Karamaan (Christopher Lewis) - _NY, USA_
-- Fynder (Renzo Carbonara, Oliver Charles) - _London, UK_
-- Daniel Patterson, Jakub Ryška, Travis Staton
-- et al
+
+Significant contributions by folks using it in production.
 
 Runs on top of [`postgresql-simple`](https://hackage.haskell.org/package/postgresql-simple)
 
-```code
+```haskell
 executable haskellerz-sqlgen-opaleye
   main-is:             Main.hs
   ghc-options:         -Wall -Werror
   build-depends:       base                == 4.8.*
-                     , lens
                      , mtl                 >= 2.2
                      , opaleye             >= 0.4.1
-                     , opaleye-classy      >= 0.3.1
                      , product-profunctors
                      , semigroups
                      , text
@@ -1477,6 +1468,8 @@ Mainly:
 - Partial support for placeholders.
 - Unclear aggregation semantics.
 
+Example: https://github.com/m4dc4p/haskelldb/issues/22
+
 ---
 
 ## Closing Notes & Considerations
@@ -1491,3 +1484,5 @@ Mainly:
 - [Ben Kolera from Brisbane Functional Programming Group on Opaleye](https://www.youtube.com/watch?v=A0oVn-GXOok)
 - [Renzo Carbonara on `opaleye-sot`](http://ren.zone/articles/opaleye-sot)
 - [Tom Ellis on Arrows](https://ocharles.org.uk/blog/guest-posts/2014-12-21-arrows.html)
+- [Trivially generating an invalid query in HRR](http://comments.gmane.org/gmane.comp.lang.haskell.cafe/114135)
+- [Bugs in Opaleye](https://github.com/tomjaguarpaw/haskell-opaleye/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
