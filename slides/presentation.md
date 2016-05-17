@@ -634,7 +634,13 @@ title' :: Pi Todo String
 They also serve to describe that the type of they key is `r1` for record type
 `r0`.
 
-In this context, they are simply an index of a list with _phantom types_.
+In this context, they are simply an index of an array with _phantom types_.
+
+```haskell
+id' :: Pi Todo Int32
+id' = Database.Relational.Query.Pi.Unsafe.definePi
+        (columnOffsetsTodo array-0.5.1.0:Data.Array.Base.! 0)
+```
 
 ---
 
