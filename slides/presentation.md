@@ -1260,6 +1260,7 @@ Opaleye uses Product Profunctors extensively. Namely:
 - `TableDefinition`: Constructs table definitions.
 - `QueryRunner`: Turn a `Query` into `haskells`.
 - `Aggregator`: Applies an aggregator to the result of a query.
+- etc.
 
 ---
 
