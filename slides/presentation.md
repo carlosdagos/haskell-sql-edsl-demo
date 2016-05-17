@@ -75,6 +75,11 @@ well-tested queries to provide arbitrarily complex ones.
 Having pertinent data structures that represent our queries to provide
 compile-time safety to our programs.
 
+#### What is a _valid query_?
+
+_"It depends"_. Both HRR and Opaleye will help us avoid making trivial
+mistakes, but neither is perfect.
+
 ---
 
 ## Sample application and design
@@ -557,7 +562,8 @@ $(defineTable "public" "todo" [''Show])
 
 - A database connection will be needed on compilation time
 
-- Our record will have the fields of the table in CamelCase
+- Our record will have the fields of the table in CamelCase, with the database
+types mapped to Haskell types by default according to [Database.Relational.Schema.PostgreSQL](https://github.com/khibino/haskell-relational-record/blob/master/relational-schemas/src/Database/Relational/Schema/PostgreSQL.hs#L59).
 
 - I did have to define the `defineTable` method, see file
 `hrr/src/HRR/DataSource.hs`, with PostgreSQL-specific functions.
@@ -626,6 +632,8 @@ title' :: Pi Todo String
 They also serve to describe that the type of they key is `r1` for record type
 `r0`.
 
+In this context, they are simply an index of a list with _phantom types_.
+
 ---
 
 ## Haskell Relational Record (HRR)
@@ -636,11 +644,13 @@ They also serve to describe that the type of they key is `r1` for record type
 -- file hrr/src/HRR/Commands.hs
 import qualified HRR.Todo as T
 
--- | Important part :)
+-- | Important part
 runFindCommand :: (IConnection conn) => conn -> Int32 -> [Flag] -> IO ()
 runFindCommand conn x flags =
         runQPrint conn x T.selectTodo (printTodo conn)
+```
 
+```haskell
 -- | Helper functions to print out records
 printTodo :: (IConnection conn) => conn -> T.Todo -> IO ()
 printTodo = ...
@@ -840,7 +850,7 @@ SELECT ALL T1.f0 AS f0, T1.f1 AS f1, T1.f2 AS f2, T1.f3 AS f3
 FROM (SELECT ALL
       T0.id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
       FROM PUBLIC.todo T0 ORDER BY T0.prio DESC) T1
-      WHERE (T1.f1 <= ?)
+WHERE (T1.f1 <= ?)
 ```
 
 ---
@@ -858,9 +868,8 @@ todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
     (ph, t) <- query' todosByPriorityAndBeforeDate
     return (ph, t ! T.id' >< t ! T.title')
 ```
-`><` Operator constructs pair results. Same as `(,) |$| x |*| y`.
-
-Provided functions `fst'` and `snd'`.
+`><` Operator constructs pair results. Same as `(,) |$| x |*| y`. Provided
+functions `fst'` and `snd'`.
 
 Produces
 
@@ -871,7 +880,7 @@ FROM (SELECT ALL
       FROM (SELECT ALL
             T0.id AS f0, T0.due_date AS f1, T0.title AS f2, T0.prio AS f3
             FROM PUBLIC.todo T0 ORDER BY T0.prio DESC) T1
-            WHERE (T1.f1 <= ?)) T2
+WHERE (T1.f1 <= ?)) T2
 ```
 
 Fun fact: In college I had a hard time with my naming skills
@@ -941,7 +950,7 @@ FROM (SELECT ALL
       FROM PUBLIC.todo T0
       LEFT JOIN PUBLIC.hashtag T1
       ON (T0.id = T1.todo_id)) T2
-      WHERE (T2.f5 IS NULL)
+WHERE (T2.f5 IS NULL)
 ```
 
 ---
@@ -1034,6 +1043,9 @@ aggregateRelation
 
 ## Haskell Relational Record (HRR)
 
+Accumulates various context in a State Monad context (like join product, group
+keys and ordering.)
+
 .pull-left[
 #### Important data structures
 
@@ -1061,19 +1073,7 @@ aggregateRelation
 - `asc`, `desc`
 - `groupBy`
 - `having`
-
-#### Important typeclasses
-
-- `MonadQuery`, `MonadAggregate`, `MonadRestrict`...
 ]
-
-#### Important instances
-
-- `QueryJoin`, `Orderings`, `Restrictings` => `MonadQuery`
-- `Orderings`, `Restrictings` => `MonadAggregate`
-
-Accumulates various context in a State Monad context (like join product, group
-keys and ordering.)
 
 ---
 

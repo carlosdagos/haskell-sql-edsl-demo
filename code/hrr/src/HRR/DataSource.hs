@@ -19,6 +19,8 @@ connect' = connectPostgreSQL "dbname=postgres"
 -- | from the table definition
 -- | By using TemplateHaskell, this means that there will need to be
 -- | a database connection when compiling the program
+-- | Types are converted by default according to this list
+-- | https://github.com/khibino/haskell-relational-record/blob/master/relational-schemas/src/Database/Relational/Schema/PostgreSQL.hs#L59
 defineTable :: String -> -- ^ Schema name
                String -> -- ^ Table name
                [Name] -> -- ^ Derives
