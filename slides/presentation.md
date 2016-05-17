@@ -52,6 +52,8 @@ We're concerned with results rather than performance.
 Generating queries is not about mapping data types to database rows, we also
 have a need for aggregation, counting, reports...
 
+If you're looking for an ORM, try [Persistent](http://www.yesodweb.com/book/persistent).
+
 #### PostgreSQL
 
 The commonly-supported RDMBS between the libraries we'll be seeing is
@@ -1235,6 +1237,34 @@ Arrows instead of Monads!
 
 ## Opaleye
 
+#### Profunctors and Product Profunctors
+
+First-class representations of transformations
+
+```haskell
+ghci> import Data.Profunctor.Product
+ghci> :t p1
+p1 :: ProductProfunctor p => p a1 b1 -> p a1 b1
+ghci> p1 (+2) (2 :: Int)
+4
+ghci> :t p2
+p2 :: ProductProfunctor p => (p a1 b1, p a2 b2) -> p (a1, a2) (b1, b2)
+ghci> p2 ( ((+1),(*2)) ) (1 :: Int, 2 :: Int)
+(2,4)
+```
+
+We derived `pTodo` before. Same principle applies.
+
+Opaleye uses Product Profunctors extensively. Namely:
+
+- `TableDefinition`: Constructs table definitions.
+- `QueryRunner`: Turn a `Query` into `haskells`.
+- `Aggregator`: Applies an aggregator to the result of a query.
+
+---
+
+## Opaleye
+
 #### Composing queries
 
 ```haskell
@@ -1413,8 +1443,8 @@ runQuery
 ```
 
 This means that we can run `Query columns`, and so long as there's a
-`Profunctor.Product.Default` instance that can transform our `columns`
-into `haskells`, we'll be able to retrieve the information.
+`Profunctor` instance that can transform our `columns` into `haskells`, we'll
+be able to retrieve the information.
 
 If there's no such instance, our program won't compile.
 
