@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 executable haskellerz-sqlgen-opaleye
   main-is:             Main.hs
-  ghc-options:         -Wall
+  ghc-options:         -Wall -ddump-splices
   build-depends:       base                == 4.8.*
                      , mtl                 >= 2.2
                      , opaleye             >= 0.4.2
