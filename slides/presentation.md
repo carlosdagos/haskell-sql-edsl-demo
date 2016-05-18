@@ -244,7 +244,7 @@ select * from todos where due_date < current_date
 ```
 List TODOs due on a specific date and belonging to a certain hashtag
 ```sql
-select * from hashtags h
+select t.* from hashtags h
 join todos t on h.todo_id = t.id
 where h.hashtag  = ?
 and   t.due_date = ?
