@@ -73,18 +73,11 @@ runAddCommand :: Connection -> String -> [Flag] -> IO ()
 runAddCommand c desc flags = do
     let priority = prioFromFlags flags
     let dueDate  = either error id (dueDateFromFlags flags)
-    let todo = if isJust priority then
-                  T.Todo { T.getId      = Nothing
-                         , T.getTitle   = desc
-                         , T.getDueDate = dueDate
-                         , T.getPrio    = priority
-                         }
-               else
-                  T.Todo { T.getId      = Nothing
-                         , T.getTitle   = desc
-                         , T.getDueDate = dueDate
-                         , T.getPrio    = Nothing
-                         }
+    let todo = T.Todo { T.getId      = Nothing
+                      , T.getTitle   = desc
+                      , T.getDueDate = dueDate
+                      , T.getPrio    = priority
+                      }
 
     Only tid <- T.addTodo c todo
     putStrLn (unwords ["Added todo", show tid])

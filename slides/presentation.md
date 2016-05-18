@@ -333,12 +333,11 @@ runAddCommand :: Connection -> String -> [Flag] -> IO ()
 runAddCommand c desc flags = do
     let priority = prioFromFlags flags
     let dueDate  = either error id (dueDateFromFlags flags)
-    let todo = if isJust priority then
-                  T.Todo { T.getId      = Nothing, T.getTitle = desc
-                         , T.getDueDate = dueDate, T.getPrio  = priority }
-               else
-                  T.Todo { T.getId      = Nothing, T.getTitle = desc
-                         , T.getDueDate = dueDate, T.getPrio  = Nothing }
+    let todo = T.Todo { T.getId      = Nothing
+                      , T.getTitle   = desc
+                      , T.getDueDate = dueDate
+                      , T.getPrio    = priority
+                      }
 
     Only tid <- T.addTodo c todo
     putStrLn (unwords ["Added todo", show tid])
@@ -398,8 +397,7 @@ findTodo conn tid = do
                else
                     Nothing
                where
-                 q = [sql| select id, title, due_date, prio
-                           from todos
+                 q = [sql| select id, title, due_date, prio from todos
                            where id = ? |]
 ```
 
@@ -416,8 +414,7 @@ However...
 allTodosByPrio :: Connection -> IO [Todo]
 allTodosByPrio conn = query_ conn q
                       where
-                        q = [sql| select id, title, due_date, prio
-                                  from todos
+                        q = [sql| select id, title, due_date, prio from todos
                                   order by prio desc
                                   nulls last |]
 
@@ -425,8 +422,7 @@ allTodosByPrio conn = query_ conn q
 allLateTodos :: Connection -> IO [Todo]
 allLateTodos conn = query_ conn q
                     where
-                      q = [sql| select id, title, due_date, prio
-                                from todos
+                      q = [sql| select id, title, due_date, prio from todos
                                 where due_date < current_date |]
 
 ```
@@ -470,6 +466,9 @@ until I run it.
 from `Todo` could be a `String`, and my program would compile, but it would
 not crash until I run it, since the field in the table is defined as a `date`.
 This is also a problem when refactoring my database).
+
+- It's very easy to have a compiling program that can have innocent and/or
+trivial mistakes that make it crash.
 
 ---
 
@@ -629,9 +628,7 @@ title' :: Pi Todo String
 
 ```
 
-`Pi r0 r1` describe projection paths from `r0` to `r1`.
-
-They also serve to describe that the type of they key is `r1` for record type
+`Pi`s serve to describe that the type of they key is `r1` for record type
 `r0`.
 
 In this context, they are simply an index of an array with _phantom types_.
@@ -861,6 +858,9 @@ FROM (SELECT ALL
 WHERE (T1.f1 <= ?)
 ```
 
+HRR defines interfaces between Haskell pure values and query projection
+values in [Database.Relational.Query.Pure](https://github.com/khibino/haskell-relational-record/blob/master/relational-query/src/Database/Relational/Query/Pure.hs)
+
 ---
 
 ## Haskell Relational Record (HRR)
@@ -872,7 +872,7 @@ import Data.Time.Calendar      (Day)
 import qualified HRR.Todo as T
 
 todoIdAndTitleByPriorityAndBeforeDate :: Relation Day (Int32, String)
-todoIdAndTitleByPriorityAndBeforeDate = relation' $ do
+todoIdAndTitleByPriorityAndBeforeDate = relation' . placeholder $ \ph $ do
     (ph, t) <- query' todosByPriorityAndBeforeDate
     return (ph, t ! T.id' >< t ! T.title')
 ```
@@ -1255,7 +1255,7 @@ ghci> p1 (+2) (2 :: Int)
 4
 ghci> :t p2
 p2 :: ProductProfunctor p => (p a1 b1, p a2 b2) -> p (a1, a2) (b1, b2)
-ghci> p2 ( ((+1),(*2)) ) (1 :: Int, 2 :: Int)
+ghci> p2 ((+1), (*2)) (1 :: Int, 2 :: Int)
 (2,4)
 ```
 
@@ -1330,7 +1330,7 @@ type HashtagNullableColumns
 
 #### Composing queries
 
-Rationalising about operators
+Compound columns
 
 ```haskell
 -- file opaleye/src/Reports.hs
@@ -1358,8 +1358,6 @@ futureTodos day = proc () -> do
 ## Opaleye
 
 #### Composing queries
-
-Rationalising about operators
 
 ```haskell
 -- file opaleye/src/Reports.hs
@@ -1406,7 +1404,7 @@ todosMultipleHashtags = proc () -> do
     todos         <- T.todoQuery -< ()
     (tid, hcount) <- todoIdsWithHashtagAmount -< ()
     restrict -< (I.todoId . T._id) todos .== tid
-    restrict -< hcount .> pgInt8 1
+    restrict -< hcount .> pgInt8 1 -- with restriction
     returnA -< todos
 ```
 
@@ -1455,11 +1453,9 @@ be able to retrieve the information.
 
 If there's no such instance, our program won't compile.
 
-More often than not, I was doing `runQuery conn myQuery :: IO [Type]`
+More often than not, I was doing `runQuery conn myQuery :: IO [haskells]`
 
-`QueryArr Input Output` is not runnable, as they're in need of input (i.e.:
-they're meant to be used as a mean of composability, with input-less arrows
-providing them with input).
+`QueryArr Input Output` is not runnable, as they're in need of input.
 
 ---
 
