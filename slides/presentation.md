@@ -20,6 +20,12 @@ class: center, middle
 6. Opaleye
 7. Closing notes. Considerations.
 
+#### Code samples
+
+```bash
+$ git clone https://github.com/charlydagos/haskell-sql-edsl-demo.git
+```
+
 ---
 
 ## Introduction
