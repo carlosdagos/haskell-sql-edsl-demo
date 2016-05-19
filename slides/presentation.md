@@ -74,7 +74,7 @@ well-tested queries to provide arbitrarily complex ones.
 
 #### What does it mean to be _type-safe_?
 
-Having pertinent data structures that represent our queries to provide
+Having pertinent data structures and type information for our queries to provide
 compile-time safety to our programs.
 
 #### What is a _valid query_?
