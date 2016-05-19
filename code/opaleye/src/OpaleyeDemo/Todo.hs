@@ -9,17 +9,17 @@
 -- | aware that this will make you write more boilerplate code
 module OpaleyeDemo.Todo where
 
-import           Control.Arrow              (returnA)
+import           Control.Arrow              (returnA, (>>>))
 import           Data.Int                   (Int64)
 import           Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import           Data.Time.Calendar         (Day)
 import           Database.PostgreSQL.Simple (Connection)
 import           Opaleye                    (Column, PGDate, PGText, Query,
                                              Table (..), descNullsLast,
-                                             optional, orderBy, pgInt4,
-                                             queryTable, required, restrict,
-                                             runDelete, runInsertReturning,
-                                             (.==), (.===))
+                                             keepWhen, optional, orderBy,
+                                             pgInt4, pgBool,queryTable, required,
+                                             restrict, runDelete,
+                                             runInsertReturning, (.==), (.===))
 import           OpaleyeDemo.Ids
 
 --------------------------------------------------------------------------------
@@ -72,13 +72,17 @@ todoQuery :: Query TodoColumns
 todoQuery = queryTable todoTable
 
 todosByPriority :: Query TodoColumns
-todosByPriority = orderBy (descNullsLast (prio . _prio)) todoQuery
+todosByPriority = orderBy (descNullsLast $ prio . _prio) todoQuery
 
 selectTodo :: TodoId -> Query TodoColumns
 selectTodo tid = proc () -> do
     todos    <- todoQuery -< ()
     restrict -< todoId (_id todos) .== pgInt4 (todoId tid)
     returnA  -< todos
+
+selectTodo' :: TodoId -> Query TodoColumns
+selectTodo' tid = todoQuery >>> keepWhen
+                  (\todos -> todoId (_id todos) .== pgInt4 (todoId tid))
 
 insertTodo :: Connection -> TodoInsertColumns -> IO TodoId
 insertTodo conn t = fmap head (runInsertReturning conn todoTable t _id)

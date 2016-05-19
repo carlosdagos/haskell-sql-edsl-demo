@@ -1170,7 +1170,7 @@ todoQuery = queryTable todoTable
 
 ## Opaleye
 
-#### Easier to define fine-grained types...
+#### Easier to use with specific types...
 
 ... In order to make sure that we're never joining incoherently
 
@@ -1243,6 +1243,38 @@ Arrows instead of Monads!
 
 ## Opaleye
 
+#### Of course, you don't "have" to
+
+```haskell
+selectTodo' :: TodoId -> Query TodoColumns
+selectTodo' tid = todoQuery >>> keepWhen
+                  (\todos -> todoId (_id todos) .== pgInt4 (todoId tid))
+```
+
+```haskell
+ghci> printSql (selectTodo' $ TodoId { todoId = 1 })
+```
+
+```sql
+SELECT "id0_1" as "result1_2",
+       "title1_1" as "result2_2",
+       "due_date2_1" as "result3_2",
+       "prio3_1" as "result4_2"
+FROM (SELECT *
+      FROM (SELECT "id" as "id0_1",
+                   "title" as "title1_1",
+                   "due_date" as "due_date2_1",
+                   "prio" as "prio3_1"
+            FROM "todos" as "T1") as "T1"
+WHERE (("id0_1") = 1)) as "T1"
+```
+
+Same output, no arrow syntax.
+
+---
+
+## Opaleye
+
 #### Profunctors and Product Profunctors
 
 First-class representations of transformations
@@ -1292,9 +1324,9 @@ FROM (SELECT *
       FROM (SELECT *
             FROM (SELECT *
                   FROM (SELECT "id" as "id0_1",
-                                "title" as "title1_1",
-                                "due_date" as "due_date2_1,
-                                "prio" as "prio3_1"
+                               "title" as "title1_1",
+                               "due_date" as "due_date2_1,
+                               "prio" as "prio3_1"
                         FROM "todos" as "T1") as "T1") as "T1"
             ORDER BY "prio3_1" DESC NULLS LAST) as "T1") as "T1"
 ```
@@ -1322,6 +1354,14 @@ todosWithoutHashtags = proc () -> do
 --- file opaleye/src/OpaleyeDemo/Hashtag.hs
 type HashtagNullableColumns
   = Hashtag' TodoIdColumnNullable HashtagStrColumnNullable
+```
+
+```haskell
+ghci> :t leftJoin
+:: (..) => Opaleye.Query columnsA
+        -> Opaleye.Query columnsB
+        -> ((columnsA, columnsB) -> Column PGBool
+        -> Opaleye.Query (columnsA, nullableColumnsB)
 ```
 
 ---
