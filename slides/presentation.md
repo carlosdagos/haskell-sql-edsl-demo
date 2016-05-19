@@ -1402,7 +1402,7 @@ futureTodos day = proc () -> do
 
 ## Opaleye
 
-#### Composing queries
+#### Aggregation
 
 ```haskell
 -- file opaleye/src/Reports.hs
@@ -1440,8 +1440,8 @@ todoIdsWithHashtagAmount
   = aggregate (p2 (groupBy, count))
   $ proc () -> do
         hashtags <- H.hashtagQuery -< ()
-        returnA -< ( (I.todoId . H._todoId) hashtags
-                   , (I.hashtagStr . H._hashtag) hashtags)
+        returnA -< ( (I.todoId . H._todoId) hashtags        -- group by
+                   , (I.hashtagStr . H._hashtag) hashtags)  -- count
 
 
 todosMultipleHashtags :: Query T.TodoColumns
@@ -1449,7 +1449,7 @@ todosMultipleHashtags = proc () -> do
     todos         <- T.todoQuery -< ()
     (tid, hcount) <- todoIdsWithHashtagAmount -< ()
     restrict -< (I.todoId . T._id) todos .== tid
-    restrict -< hcount .> pgInt8 1 -- with restriction
+    restrict -< hcount .> pgInt8 1                         -- with restriction
     returnA -< todos
 ```
 
@@ -1457,7 +1457,7 @@ todosMultipleHashtags = proc () -> do
 
 ## Opaleye
 
-#### `GROUP BY`-`HAVING` as a self inner join
+#### `GROUP BY`-`HAVING` as an inner join (bis)
 
 ```haskell
 -- file opaleye/src/Reports.hs
