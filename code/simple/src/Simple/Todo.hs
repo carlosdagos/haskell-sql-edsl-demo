@@ -40,9 +40,9 @@ instance FromRow Todo where
                    <*> field -- prio
 
 instance ToRow Todo where
-    toRow t = [ toField (getTitle t)
-              , toField (getDueDate t)
-              , toField (getPrio t)
+    toRow t = [ toField . getTitle $ t
+              , toField . getDueDate $ t
+              , toField . getPrio $ t
               ]
 
 instance Eq Todo where

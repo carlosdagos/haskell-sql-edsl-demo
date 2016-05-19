@@ -134,9 +134,9 @@ $ todos add 'Display presentation at Haskellerz!' \
 Added TODO with id 6
 ```
 
-So far this is a basic CR~~U~~D. But what about more complex queries? No software
-is complete without its flags. Plus, from `$ todos find 1` we saw that our app is aware
-of the concept of a "hashtag", as well as due dates.
+So far this is a basic CR~~U~~D. But what about more complex queries? No
+software is complete without its options. Plus, from `$ todos find 1` we saw
+that our app is aware of the concept of a "hashtag", as well as due dates.
 
 ---
 
@@ -164,6 +164,13 @@ List TODOs that are already late...
 ```bash
 $ todos list --late --with-hashtags
 5. Call boss (due by: 18 May 2016) (priority: 20) #good-employee
+```
+
+Finally, get some reports
+
+```bash
+$ todos report
+# Reports of late todos, todos without hashtags, with multiple hashtags...
 ```
 
 ---
@@ -255,9 +262,9 @@ and   t.due_date = ?
 ## Sample application and design
 
 In short, we'll need plenty of queries to match all the possible combinations
-of flags that I can accept.
+of options that I can accept.
 
-- I can compose flags
+- I can compose options
 - Can I compose my queries?
 
 ---
@@ -266,7 +273,7 @@ of flags that I can accept.
 
 #### Bryan O’Sullivan and Leon Smith's [`postgresql-simple`](http://hackage.haskell.org/package/postgresql-simple)
 
-I can design my types normally
+I can design my types to my liking
 
 ```haskell
 -- file simple/src/Simple/Todo.hs
@@ -277,8 +284,8 @@ data Todo = Todo { getId       :: !(Maybe Int) -- Can be null
                  } deriving (Show)
 
 -- file simple/src/Simple/Hashtag.hs
-data Hashtag = Hashtag { getTodoId  :: !(Maybe Int) -- Can be null
-                       , getHashtag :: !String      -- Hashtag string val
+data Hashtag = Hashtag { getTodoId  :: !Int    -- Cannot be null
+                       , getHashtag :: !String -- Hashtag string val
                        } deriving (Show, Eq)
 ```
 
@@ -297,9 +304,9 @@ instance FromRow Todo where
                    <*> field -- prio
 
 instance ToRow Todo where
-    toRow t = [ toField (getTitle t)
-              , toField (getDueDate t)
-              , toField (getPrio t)
+    toRow t = [ toField . getTitle $ t
+              , toField . getDueDate $ t
+              , toField . getPrio $ t
               ]
 
 -- file simple/src/Simple/Hashtag.hs
@@ -308,7 +315,7 @@ instance FromRow Hashtag where
                       <*> field -- the hashtag string
 
 instance ToRow Hashtag where
-    toRow h = [ toField . fromJust . getTodoId $ h
+    toRow h = [ toField . getTodoId $ h
               , toField . getHashtag $ h
               ]
 ```
@@ -350,6 +357,33 @@ runAddCommand c desc flags = do
 #### Sample methods
 
 ```haskell
+-- file src/Simple/Todo.hs
+allTodos :: Connection -> IO [Todo]
+allTodos conn = query_ conn q
+                where
+                  q = [sql| select id, title, due_date, prio
+                            from todos |]
+
+-- Same query, with 1 restriction
+findTodo :: Connection -> Int -> IO (Maybe Todo)
+findTodo conn tid = do
+               result <- query conn q (Only tid)
+               return $ if length result == 1 then
+                    Just (head result)
+               else
+                    Nothing
+               where
+                 q = [sql| select id, title, due_date, prio from todos
+                           where id = ? |]
+```
+
+---
+
+## Current state of things
+
+#### Sample methods
+
+```haskell
 -- file simple/src/Simple/Todo.hs
 deleteTodo :: Connection -> Int -> IO Int64
 deleteTodo conn tid = execute conn q (Only tid)
@@ -378,36 +412,7 @@ runCompleteCommand c tid = do
 
 ## Current state of things
 
-#### Sample methods
-
-```haskell
--- file src/Simple/Todo.hs
-allTodos :: Connection -> IO [Todo]
-allTodos conn = query_ conn q
-                where
-                  q = [sql| select id, title, due_date, prio
-                            from todos |]
-
--- Same query, with 1 restriction
-findTodo :: Connection -> Int -> IO (Maybe Todo)
-findTodo conn tid = do
-               result <- query conn q (Only tid)
-               return $ if length result == 1 then
-                    Just (head result)
-               else
-                    Nothing
-               where
-                 q = [sql| select id, title, due_date, prio from todos
-                           where id = ? |]
-```
-
-That was simple enough!
-
----
-
-## Current state of things
-
-However...
+More queries
 
 ```haskell
 -- Same query again, this time sorted in a specific way
