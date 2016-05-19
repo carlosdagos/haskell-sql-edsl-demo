@@ -1488,8 +1488,8 @@ runQuery
 ```
 
 This means that we can run `Query columns`, and so long as there's a
-`Profunctor` instance that can transform our `columns` into `haskells`, we'll
-be able to retrieve the information.
+`Product Profunctor` adaptor that can transform our `columns` into `haskells`,
+we'll be able to retrieve (transform) the information.
 
 If there's no such instance, our program won't compile.
 
