@@ -17,7 +17,7 @@ import           Database.PostgreSQL.Simple (Connection)
 import           Opaleye                    (Column, PGDate, PGText, Query,
                                              Table (..), descNullsLast,
                                              keepWhen, optional, orderBy,
-                                             pgInt4, pgBool,queryTable, required,
+                                             pgInt4, queryTable, required,
                                              restrict, runDelete,
                                              runInsertReturning, (.==), (.===))
 import           OpaleyeDemo.Ids
