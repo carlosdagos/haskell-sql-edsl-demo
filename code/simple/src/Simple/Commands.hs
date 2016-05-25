@@ -9,14 +9,17 @@ module Simple.Commands
     , Flag(..)
     ) where
 
-import qualified Data.ByteString.Char8           as B (pack, split, unpack)
-import           Data.List                       (intercalate)
-import           Data.Maybe                      (fromJust, isJust, isNothing)
-import           Data.Time.Calendar              (fromGregorian)
-import           Database.PostgreSQL.Simple      (Connection, Only (..))
-import           Database.PostgreSQL.Simple.Time (Date, parseDate)
-import qualified Simple.Hashtag                  as H
-import qualified Simple.Todo                     as T
+import qualified Data.ByteString.Char8                  as B (pack, split,
+                                                              unpack)
+import           Data.List                              (intercalate)
+import           Data.Maybe                             (fromJust, isJust,
+                                                         isNothing)
+import           Data.Time.Calendar                     (fromGregorian)
+import           Database.PostgreSQL.Simple             (Connection, Only (..))
+import           Database.PostgreSQL.Simple.Time        (Date, parseDate)
+import           Database.PostgreSQL.Simple.Transaction (withTransaction)
+import qualified Simple.Hashtag                         as H
+import qualified Simple.Todo                            as T
 import           System.Exit
 import           System.IO
 
@@ -83,7 +86,7 @@ runAddCommand c desc flags = do
     putStrLn (unwords ["Added todo", show tid])
 
 runCompleteCommand :: Connection -> Int -> IO ()
-runCompleteCommand c tid = do
+runCompleteCommand c tid = withTransaction c $ do
     maybeTodo <- T.findTodo c tid
     hashtags  <- H.allHashtagsForTodo c tid
     affected  <- T.deleteTodo c tid

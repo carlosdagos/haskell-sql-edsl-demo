@@ -10,18 +10,20 @@ module OpaleyeDemo.Commands
     , Flag(..)
     ) where
 
-import qualified Data.ByteString.Char8      as B (pack, split, unpack)
-import           Data.Maybe                 (fromJust, isNothing)
-import           Data.Time.Calendar         (Day, fromGregorian)
-import           Database.PostgreSQL.Simple (Connection)
+import qualified Data.ByteString.Char8                  as B (pack, split,
+                                                              unpack)
+import           Data.Maybe                             (fromJust, isNothing)
+import           Data.Time.Calendar                     (Day, fromGregorian)
+import           Database.PostgreSQL.Simple             (Connection)
+import           Database.PostgreSQL.Simple.Transaction (withTransaction)
 import           Opaleye
 import           OpaleyeDemo.Flags
-import qualified OpaleyeDemo.Hashtag        as H
-import qualified OpaleyeDemo.Ids            as I
-import qualified OpaleyeDemo.Reports        as R
-import qualified OpaleyeDemo.Todo           as T
-import qualified OpaleyeDemo.Utils          as U
-import           Prelude                    hiding (null)
+import qualified OpaleyeDemo.Hashtag                    as H
+import qualified OpaleyeDemo.Ids                        as I
+import qualified OpaleyeDemo.Reports                    as R
+import qualified OpaleyeDemo.Todo                       as T
+import qualified OpaleyeDemo.Utils                      as U
+import           Prelude                                hiding (null)
 import           System.Exit
 import           System.IO
 
@@ -62,7 +64,7 @@ runAddCommand conn title flags = do
     putStrLn ("Added todo with id " ++ (show . I.todoId) tid)
 
 runCompleteCommand :: Connection -> Int -> IO ()
-runCompleteCommand conn i = do
+runCompleteCommand conn i = withTransaction conn $ do
     let tid = I.TodoId { I.todoId = i }
     todos    <- runQuery conn (T.selectTodo tid) :: IO [T.Todo]
     affected <- T.deleteTodo conn tid

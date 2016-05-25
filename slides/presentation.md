@@ -1365,7 +1365,7 @@ type HashtagNullableColumns
 ghci> :t leftJoin
 :: (..) => Opaleye.Query columnsA
         -> Opaleye.Query columnsB
-        -> ((columnsA, columnsB) -> Column PGBool
+        -> ((columnsA, columnsB) -> Column PGBool)
         -> Opaleye.Query (columnsA, nullableColumnsB)
 ```
 

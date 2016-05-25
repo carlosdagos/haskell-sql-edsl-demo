@@ -5,6 +5,12 @@ This repo contains the material I used for a HaskellerZ meetup in Zurich.
 
 You can can see information about that [here](https://www.meetup.com/HaskellerZ/events/230150627/).
 
+You can also see the slides in PDF [here](slides/slides.pdf).
+
+## Before running the code
+
+Make sure you have PostgreSQL installed and run the files [in the sql directory](slides/code/sql/).
+
 ## Composable, type-safe SQL query generation in Haskell
 
 Libraries like [Opaleye](https://github.com/tomjaguarpaw/haskell-opaleye/) and [Haskell Relational Record](https://github.com/khibino/haskell-relational-record) make use of Haskell's type system to provide an abstract way of composing SQL queries that are guaranteed to be valid.
