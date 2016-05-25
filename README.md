@@ -9,7 +9,7 @@ You can also see the slides in PDF [here](slides/slides.pdf).
 
 ## Before running the code
 
-Make sure you have PostgreSQL installed and run the files [in the sql directory](slides/code/sql/).
+Make sure you have PostgreSQL installed and run the files [in the sql directory](code/sql/).
 
 ## Composable, type-safe SQL query generation in Haskell
 
