@@ -21,7 +21,7 @@ import qualified OpaleyeDemo.Ids                 as I
 import qualified OpaleyeDemo.Todo                as T
 
 printSql :: Default Unpackspec a a => Query a -> IO ()
-printSql = putStrLn . showSqlForPostgres
+printSql = maybe (pure ()) putStrLn . showSqlForPostgres
 
 runQueryDebug :: (Default Unpackspec columns columns,
                   Default QueryRunner columns haskells) =>

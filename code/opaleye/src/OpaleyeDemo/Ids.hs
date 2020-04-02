@@ -40,8 +40,3 @@ type HashtagStr = HashtagStr' String
 type HashtagStrColumn = HashtagStr' (Column PGText)
 type HashtagStrColumnNullable = HashtagStr' (Column (Nullable PGText))
 
---------------------------------------------------------------------------------
--- | This is already available in 'master' but no on hackage
--- | so please forgive this hack :)
-instance PGOrd a => PGOrd (Nullable a)
-
